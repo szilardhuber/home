@@ -1,0 +1,21 @@
+{
+  "name": "home",
+  "version": "0.0.1",
+  "homepage": "https://github.com/szilardhuber/home",
+  "authors": [
+    "Szilard Huber <szilard.huber@gmail.com>"
+  ],
+  "license": "-",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "threejs": "*",
+    "jquery": "~2.0.3"
+  }
+}
