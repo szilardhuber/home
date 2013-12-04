@@ -10,5 +10,21 @@ html
 		script(src="index.js")
 
 	body
-		span#floorplan
-		span#container
+		table
+			tr
+				td 2d
+				td 3d
+				td Plan
+			tr
+				td
+					span#floorplan
+				td
+					span#container
+				td
+					span
+						textarea#text(rows=22, cols=50)
+							| Wall, 0, 240, 270, 240, 270, 44
+							| Wall, 0, 0, 0, 240, 270, 44
+							| Wall, 270, 240, 270, 0, 270, 10
+							| Wall, 0, 0, 105, 0, 270, 10
+							| Wall, 175, 0, 270, 0, 270, 10
