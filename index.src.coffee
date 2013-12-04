@@ -48,14 +48,14 @@ $ ->
 	# attach the render-supplied DOM element
 	$container.append renderer.domElement
 
-	wall = new Wall(0, 240, 270, 240, 270, 44)
-	wall2 = new Wall(0, 0, 0, 240, 270, 44)
-	wall3 = new Wall(270, 240, 270, 0, 270, 10)
+	objects = []
+	objects[0] = new Wall(0, 240, 270, 240, 270, 44)
+	objects[1] = new Wall(0, 0, 0, 240, 270, 44)
+	objects[2] = new Wall(270, 240, 270, 0, 270, 10)
 
 	# add the wall to the scene
-	scene.add wall.mesh
-	scene.add wall2.mesh
-	scene.add wall3.mesh
+	for object in objects
+		scene.add object.mesh
 
 	# create a point light
 	pointLight = new THREE.AmbientLight(0xEEEEEE)
@@ -71,7 +71,24 @@ $ ->
 	# draw!
 	renderer.render scene, camera
 
+	# Floorplan
+	stage = new Kinetic.Stage
+		container: floorplan
+		width: WIDTH
+		height: HEIGHT
+		scale: 
+			x: 1
+			y: -1
+		offset:
+			x: -50
+			y: 250
+	
+	layer = new Kinetic.Layer
 
+	for object in objects
+		layer.add object.polygon
+
+	stage.add layer
 class Wall
 
 	# 
@@ -90,6 +107,17 @@ class Wall
 		@mesh.position.x = (@startx + @endx) / 2 + (@width / 2)
 		@mesh.position.z = -((@starty + @endy) / 2 + (@width / 2))
 		@mesh.rotation.y = Math.atan( (@endy - @starty) / (@endx - @startx) )
+		endx2 = @endx + @width * Math.sin(@mesh.rotation.y)
+		endy2 = @endy - @width * Math.cos(@mesh.rotation.y)
+		startx2 = @startx + @width * Math.sin(@mesh.rotation.y)
+		starty2 = @starty - @width * Math.cos(@mesh.rotation.y)
+		@polygon = new Kinetic.Polygon
+			points: [@startx, @starty, @endx, @endy, endx2, endy2, startx2, starty2]
+			fill: 'green'
+			stroke: 'black'
+			strokeWidth: 4
+
+
 
 	length: () ->
 		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 

@@ -2,7 +2,7 @@
   var Wall;
 
   $(function() {
-    var $container, ASPECT, FAR, HEIGHT, NEAR, VIEW_ANGLE, WIDTH, camera, pointLight, renderer, scene, wall, wall2, wall3;
+    var $container, ASPECT, FAR, HEIGHT, NEAR, VIEW_ANGLE, WIDTH, camera, layer, object, objects, pointLight, renderer, scene, stage, _i, _j, _len, _len1;
     WIDTH = 400;
     HEIGHT = 300;
     VIEW_ANGLE = 45;
@@ -35,23 +35,44 @@
     camera.position.y = 600;
     renderer.setSize(WIDTH, HEIGHT);
     $container.append(renderer.domElement);
-    wall = new Wall(0, 240, 270, 240, 270, 44);
-    wall2 = new Wall(0, 0, 0, 240, 270, 44);
-    wall3 = new Wall(270, 240, 270, 0, 270, 10);
-    scene.add(wall.mesh);
-    scene.add(wall2.mesh);
-    scene.add(wall3.mesh);
+    objects = [];
+    objects[0] = new Wall(0, 240, 270, 240, 270, 44);
+    objects[1] = new Wall(0, 0, 0, 240, 270, 44);
+    objects[2] = new Wall(270, 240, 270, 0, 270, 10);
+    for (_i = 0, _len = objects.length; _i < _len; _i++) {
+      object = objects[_i];
+      scene.add(object.mesh);
+    }
     pointLight = new THREE.AmbientLight(0xEEEEEE);
     pointLight.position.x = 10;
     pointLight.position.y = 50;
     pointLight.position.z = 130;
     scene.add(pointLight);
-    return renderer.render(scene, camera);
+    renderer.render(scene, camera);
+    stage = new Kinetic.Stage({
+      container: floorplan,
+      width: WIDTH,
+      height: HEIGHT,
+      scale: {
+        x: 1,
+        y: -1
+      },
+      offset: {
+        x: -50,
+        y: 250
+      }
+    });
+    layer = new Kinetic.Layer;
+    for (_j = 0, _len1 = objects.length; _j < _len1; _j++) {
+      object = objects[_j];
+      layer.add(object.polygon);
+    }
+    return stage.add(layer);
   });
 
   Wall = (function() {
     function Wall(startx, starty, endx, endy, height, width) {
-      var materials, sphereMaterial;
+      var endx2, endy2, materials, sphereMaterial, startx2, starty2;
       this.startx = startx;
       this.starty = starty;
       this.endx = endx;
@@ -78,6 +99,16 @@
       this.mesh.position.x = (this.startx + this.endx) / 2 + (this.width / 2);
       this.mesh.position.z = -((this.starty + this.endy) / 2 + (this.width / 2));
       this.mesh.rotation.y = Math.atan((this.endy - this.starty) / (this.endx - this.startx));
+      endx2 = this.endx + this.width * Math.sin(this.mesh.rotation.y);
+      endy2 = this.endy - this.width * Math.cos(this.mesh.rotation.y);
+      startx2 = this.startx + this.width * Math.sin(this.mesh.rotation.y);
+      starty2 = this.starty - this.width * Math.cos(this.mesh.rotation.y);
+      this.polygon = new Kinetic.Polygon({
+        points: [this.startx, this.starty, this.endx, this.endy, endx2, endy2, startx2, starty2],
+        fill: 'green',
+        stroke: 'black',
+        strokeWidth: 4
+      });
     }
 
     Wall.prototype.length = function() {
