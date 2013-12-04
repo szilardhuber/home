@@ -96,13 +96,13 @@
       ];
       sphereMaterial = new THREE.MeshFaceMaterial(materials);
       this.mesh = new THREE.Mesh(new THREE.CubeGeometry(this.length(), this.height, this.width), sphereMaterial);
-      this.mesh.position.x = (this.startx + this.endx) / 2 + (this.width / 2);
-      this.mesh.position.z = -((this.starty + this.endy) / 2 + (this.width / 2));
       this.mesh.rotation.y = Math.atan((this.endy - this.starty) / (this.endx - this.startx));
       endx2 = this.endx + this.width * Math.sin(this.mesh.rotation.y);
       endy2 = this.endy - this.width * Math.cos(this.mesh.rotation.y);
       startx2 = this.startx + this.width * Math.sin(this.mesh.rotation.y);
       starty2 = this.starty - this.width * Math.cos(this.mesh.rotation.y);
+      this.mesh.position.x = (endx2 + this.startx) / 2;
+      this.mesh.position.z = -(endy2 + this.starty) / 2;
       this.polygon = new Kinetic.Polygon({
         points: [this.startx, this.starty, this.endx, this.endy, endx2, endy2, startx2, starty2],
         fill: 'green',
