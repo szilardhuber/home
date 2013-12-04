@@ -48,14 +48,14 @@ $ ->
 	# attach the render-supplied DOM element
 	$container.append renderer.domElement
 
-	wall = new Wall(0, 240, 270, 240, 270, 44)
-	wall2 = new Wall(0, 0, 0, 240, 270, 44)
-	wall3 = new Wall(270, 240, 270, 0, 270, 10)
+	objects = []
+	objects[0] = new Wall(0, 240, 270, 240, 270, 44)
+	objects[1] = new Wall(0, 0, 0, 240, 270, 44)
+	objects[2] = new Wall(270, 240, 270, 0, 270, 10)
 
 	# add the wall to the scene
-	scene.add wall.mesh
-	scene.add wall2.mesh
-	scene.add wall3.mesh
+	for object in objects
+		scene.add object.mesh
 
 	# create a point light
 	pointLight = new THREE.AmbientLight(0xEEEEEE)
@@ -71,3 +71,21 @@ $ ->
 	# draw!
 	renderer.render scene, camera
 
+	# Floorplan
+	stage = new Kinetic.Stage
+		container: floorplan
+		width: WIDTH
+		height: HEIGHT
+		scale: 
+			x: 1
+			y: -1
+		offset:
+			x: -50
+			y: 250
+	
+	layer = new Kinetic.Layer
+
+	for object in objects
+		layer.add object.polygon
+
+	stage.add layer

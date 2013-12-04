@@ -17,5 +17,8 @@
   "dependencies": {
     "threejs": "*",
     "jquery": "~2.0.3"
+  },
+  "devDependencies": {
+    "kineticjs": "~4.7.3"
   }
 }
