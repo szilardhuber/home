@@ -49,12 +49,17 @@ class Plan
 
 	reset: () ->
 		@layer.removeChildren()
+		children = @scene.children[..]
+		for child in children
+			if child and child.name == "block"
+				@scene.remove child
 
 	draw: () ->
 		@renderer.render @scene, @camera
 		@layer.batchDraw()
 
 	add: (object) ->
+		object.mesh.name = "block"
 		@scene.add object.mesh
 		@layer.add object.polygon
 		@draw()
