@@ -48,7 +48,19 @@
     }
 
     Plan.prototype.reset = function() {
-      return this.layer.removeChildren();
+      var child, children, _i, _len, _results;
+      this.layer.removeChildren();
+      children = this.scene.children.slice(0);
+      _results = [];
+      for (_i = 0, _len = children.length; _i < _len; _i++) {
+        child = children[_i];
+        if (child && child.name === "block") {
+          _results.push(this.scene.remove(child));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
     };
 
     Plan.prototype.draw = function() {
@@ -57,6 +69,7 @@
     };
 
     Plan.prototype.add = function(object) {
+      object.mesh.name = "block";
       this.scene.add(object.mesh);
       this.layer.add(object.polygon);
       return this.draw();
