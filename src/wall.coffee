@@ -27,7 +27,21 @@ class Wall
 			stroke: 'black'
 			strokeWidth: 4
 
-
+	###
+# OUTER WALLS
+	Wall, 0, -580, 0, 240, 270, 44
+	Wall, 44, 240, 990, 240, 270, 44
+        Wall, 990, -580, 990, 240, 270, 44 
+        Wall, 44, -536, 990, -536, 270, 44
+# BATHROOM
+	Wall, 315, 196, 315, -60, 270, 10
+	Wall, 44, 10, 137, 10, 270, 10
+	Wall, 211, 10, 305, 10, 270, 10
+	Wall, 137, 0, 137, -60, 270, 10
+	Wall, 221, 0, 221, -60, 270, 10
+# BEDROOM
+        Wall, 315, -150, 315, -536, 270, 10
+   	###
 
 	length: () ->
 		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 

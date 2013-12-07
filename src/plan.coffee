@@ -64,6 +64,28 @@ class Plan
 		@layer.add object.polygon
 		@draw()
 
+	fitToScreen: () ->
+		xMin = 0
+		xMax = 0
+		yMin = 0
+		yMax = 0
+		for child in @layer.children
+			for point in child.getPoints()
+				if xMin > point.x
+					xMin = point.x
+				if xMax < point.x
+					xMax = point.x
+				if yMin > point.y
+					yMin = point.y
+				if yMax < point.y
+					yMax = point.y
+		scaleY = Math.abs(HEIGHT / (yMax - yMin))
+		scaleX = Math.abs(WIDTH / (xMax - xMin))
+		@stage.setScaleY(- Math.min(scaleX, scaleY))
+		@stage.setScaleX(Math.min(scaleX, scaleY))
+		@stage.setOffsetY(yMax)
+		@draw()
+
 $ ->
 	# set the scene size
 	WIDTH = 400
@@ -97,8 +119,9 @@ $ ->
 			tokens = line.split(',')
 			if tokens[0].trim().toLowerCase() == 'wall'
 				object = new Wall(parseInt(tokens[1].trim()), parseInt(tokens[2].trim()), parseInt(tokens[3].trim()), parseInt(tokens[4].trim()), parseInt(tokens[5].trim()), parseInt(tokens[6].trim()))
-				console.log object
 				plan.add object
+		plan.fitToScreen()
+
 
 
 
