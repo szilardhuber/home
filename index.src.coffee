@@ -87,6 +87,37 @@ class Plan
 		@draw()
 
 $ ->
+	generateTexture = ->
+		# draw a circle in the center of the canvas
+		size = 256
+
+		# create canvas
+		canvas = document.createElement("canvas")
+		canvas.width = size
+		canvas.height = size
+
+		# get context
+		context = canvas.getContext("2d")
+
+		# draw background
+		context.fillStyle = "rgba( 255, 204, 102, 1 )"
+		context.fillRect 0, 0, size, size
+
+		# draw circle
+		centerX = size / 2
+		centerY = size / 2
+		radius = size / 4
+		context.beginPath()
+		context.arc centerX, centerY, radius, 0, 2 * Math.PI, false
+		context.fillStyle = "rgba( 51, 102, 153, 1 )"
+		context.fill()
+
+		#context.lineWidth = 10;
+		#context.strokeStyle = "red";
+		#context.stroke();
+		canvas
+
+
 	# set the scene size
 	WIDTH = 400
 	HEIGHT = 300
@@ -144,6 +175,22 @@ class Wall
 
 	# 
 	constructor: (@startx, @starty, @endx, @endy, @height, @width) ->
+		texture = new THREE.Texture @generateTexture()
+		texture.needsUpdate = true
+		uniforms = 
+			texture: 
+				type: 't'
+				value: texture
+		attributes = {}
+
+		material = new THREE.ShaderMaterial
+			attributes: attributes
+			uniforms: uniforms
+			vertexShader: document.getElementById( 'vertex_shader' ).textContent
+			fragmentShader: document.getElementById( 'fragment_shader' ).textContent
+
+
+
 		materials = [
 			new THREE.MeshBasicMaterial(color: 0xAACC00)
 			new THREE.MeshBasicMaterial(color: 0xCCCC00)
@@ -154,7 +201,7 @@ class Wall
 		]
 		# create the sphere's material
 		sphereMaterial = new THREE.MeshFaceMaterial(materials)
-		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), sphereMaterial)
+		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), material)
 
 		@mesh.rotation.y = Math.atan( (@endy - @starty) / (@endx - @startx) )
 		endx2 = @endx + @width * Math.sin(@mesh.rotation.y)
@@ -184,6 +231,37 @@ class Wall
 # BEDROOM
         Wall, 315, -150, 315, -536, 270, 10
    	###
+
+	generateTexture: () ->
+		# draw a circle in the center of the canvas
+		size = 256
+
+		# create canvas
+		canvas = document.createElement("canvas")
+		canvas.width = size
+		canvas.height = size
+
+		# get context
+		context = canvas.getContext("2d")
+
+		# draw background
+		context.fillStyle = "rgba( 255, 204, 102, 1 )"
+		context.fillRect 0, 0, size, size
+
+		# draw circle
+		centerX = size / 2
+		centerY = size / 2
+		radius = size / 4
+		context.beginPath()
+		context.arc centerX, centerY, radius, 0, 2 * Math.PI, false
+		context.fillStyle = "rgba( 51, 102, 153, 1 )"
+		context.fill()
+
+		#context.lineWidth = 10;
+		#context.strokeStyle = "red";
+		#context.stroke();
+		canvas
+
 
 	length: () ->
 		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 

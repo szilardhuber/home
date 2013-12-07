@@ -1,4 +1,28 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Home</title><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><script src="libs/jquery.min.js"></script><script src="libs/three.min.js"></script><script src="libs/kinetic-v4.7.3.min.js"></script><script src="index.js"></script></head><body><table><tr><td>2d</td><td>3d</td><td>Plan</td></tr><tr><td style="border:5px solid red;"><span id="floorplan"></span></td><td><span id="container"></span></td><td><span><textarea id="text" rows="22" cols="50">Wall, 0, 240, 270, 240, 270, 44
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Home</title><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><script src="libs/jquery.min.js"></script><script src="libs/three.min.js"></script><script src="libs/kinetic-v4.7.3.min.js"></script><script src="index.js"></script><script id="vertex_shader" type="x-shader/x-vertex">varying vec2 vUv;
+varying vec3 vNormal;
+varying vec3 vViewPosition;
+void main() {
+ vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+ vUv = uv;
+ vNormal = normalize( normalMatrix * normal );
+ vViewPosition = -mvPosition.xyz;
+ gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}</script><script id="fragment_shader" type="x-shader/x-fragment">uniform sampler2D texture;
+uniform sampler2D texture2;
+varying vec2 vUv;
+varying vec3 vNormal;
+varying vec3 vViewPosition;
+void main() {
+ vec4 tColor = texture2D( texture, vUv );
+ vec4 tColor2 = texture2D( texture2, vUv );
+ // hack in a fake pointlight at camera location, plus ambient
+ vec3 normal = normalize( vNormal );
+ vec3 lightDir = normalize( vViewPosition );
+ float dotProduct = max( dot( normal, lightDir ), 0.0 ) + 0.2;
+ gl_FragColor = vec4( mix( tColor.rgb, tColor2.rgb, tColor2.a ), 1.0 ) * dotProduct;
+}
+
+</script></head><body><table><tr><td>2d</td><td>3d</td><td>Plan</td></tr><tr><td style="border:5px solid red;"><span id="floorplan"></span></td><td><span id="container"></span></td><td><span><textarea id="text" rows="22" cols="50">Wall, 0, 240, 270, 240, 270, 44
 Wall, 0, 0, 0, 240, 270, 44
 Wall, 270, 240, 270, 0, 270, 10
 Wall, 0, 0, 105, 0, 270, 10

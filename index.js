@@ -114,7 +114,25 @@
   })();
 
   $(function() {
-    var $container, ASPECT, FAR, HEIGHT, NEAR, VIEW_ANGLE, WIDTH, plan;
+    var $container, ASPECT, FAR, HEIGHT, NEAR, VIEW_ANGLE, WIDTH, generateTexture, plan;
+    generateTexture = function() {
+      var canvas, centerX, centerY, context, radius, size;
+      size = 256;
+      canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      context = canvas.getContext("2d");
+      context.fillStyle = "rgba( 255, 204, 102, 1 )";
+      context.fillRect(0, 0, size, size);
+      centerX = size / 2;
+      centerY = size / 2;
+      radius = size / 4;
+      context.beginPath();
+      context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+      context.fillStyle = "rgba( 51, 102, 153, 1 )";
+      context.fill();
+      return canvas;
+    };
     WIDTH = 400;
     HEIGHT = 300;
     VIEW_ANGLE = 45;
@@ -161,13 +179,28 @@
 
   Wall = (function() {
     function Wall(startx, starty, endx, endy, height, width) {
-      var endx2, endy2, materials, sphereMaterial, startx2, starty2;
+      var attributes, endx2, endy2, material, materials, sphereMaterial, startx2, starty2, texture, uniforms;
       this.startx = startx;
       this.starty = starty;
       this.endx = endx;
       this.endy = endy;
       this.height = height;
       this.width = width;
+      texture = new THREE.Texture(this.generateTexture());
+      texture.needsUpdate = true;
+      uniforms = {
+        texture: {
+          type: 't',
+          value: texture
+        }
+      };
+      attributes = {};
+      material = new THREE.ShaderMaterial({
+        attributes: attributes,
+        uniforms: uniforms,
+        vertexShader: document.getElementById('vertex_shader').textContent,
+        fragmentShader: document.getElementById('fragment_shader').textContent
+      });
       materials = [
         new THREE.MeshBasicMaterial({
           color: 0xAACC00
@@ -184,7 +217,7 @@
         })
       ];
       sphereMaterial = new THREE.MeshFaceMaterial(materials);
-      this.mesh = new THREE.Mesh(new THREE.CubeGeometry(this.length(), this.height, this.width), sphereMaterial);
+      this.mesh = new THREE.Mesh(new THREE.CubeGeometry(this.length(), this.height, this.width), material);
       this.mesh.rotation.y = Math.atan((this.endy - this.starty) / (this.endx - this.startx));
       endx2 = this.endx + this.width * Math.sin(this.mesh.rotation.y);
       endy2 = this.endy - this.width * Math.cos(this.mesh.rotation.y);
@@ -216,6 +249,25 @@
            Wall, 315, -150, 315, -536, 270, 10
     */
 
+
+    Wall.prototype.generateTexture = function() {
+      var canvas, centerX, centerY, context, radius, size;
+      size = 256;
+      canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      context = canvas.getContext("2d");
+      context.fillStyle = "rgba( 255, 204, 102, 1 )";
+      context.fillRect(0, 0, size, size);
+      centerX = size / 2;
+      centerY = size / 2;
+      radius = size / 4;
+      context.beginPath();
+      context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+      context.fillStyle = "rgba( 51, 102, 153, 1 )";
+      context.fill();
+      return canvas;
+    };
 
     Wall.prototype.length = function() {
       return Math.sqrt(Math.pow(this.startx - this.endx, 2) + Math.pow(this.starty - this.endy, 2));
