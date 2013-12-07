@@ -75,6 +75,40 @@
       return this.draw();
     };
 
+    Plan.prototype.fitToScreen = function() {
+      var child, point, scaleX, scaleY, xMax, xMin, yMax, yMin, _i, _j, _len, _len1, _ref, _ref1;
+      xMin = 0;
+      xMax = 0;
+      yMin = 0;
+      yMax = 0;
+      _ref = this.layer.children;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        child = _ref[_i];
+        _ref1 = child.getPoints();
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          point = _ref1[_j];
+          if (xMin > point.x) {
+            xMin = point.x;
+          }
+          if (xMax < point.x) {
+            xMax = point.x;
+          }
+          if (yMin > point.y) {
+            yMin = point.y;
+          }
+          if (yMax < point.y) {
+            yMax = point.y;
+          }
+        }
+      }
+      scaleY = Math.abs(HEIGHT / (yMax - yMin));
+      scaleX = Math.abs(WIDTH / (xMax - xMin));
+      this.stage.setScaleY(-Math.min(scaleX, scaleY));
+      this.stage.setScaleX(Math.min(scaleX, scaleY));
+      this.stage.setOffsetY(yMax);
+      return this.draw();
+    };
+
     return Plan;
 
   })();
@@ -105,23 +139,19 @@
       return plan.renderer.render(plan.scene, plan.camera);
     });
     $('#text').change(function(event) {
-      var content, line, lines, object, tokens, _i, _len, _results;
+      var content, line, lines, object, tokens, _i, _len;
       plan.reset();
       content = event.target.value;
       lines = content.split('\n');
-      _results = [];
       for (_i = 0, _len = lines.length; _i < _len; _i++) {
         line = lines[_i];
         tokens = line.split(',');
         if (tokens[0].trim().toLowerCase() === 'wall') {
           object = new Wall(parseInt(tokens[1].trim()), parseInt(tokens[2].trim()), parseInt(tokens[3].trim()), parseInt(tokens[4].trim()), parseInt(tokens[5].trim()), parseInt(tokens[6].trim()));
-          console.log(object);
-          _results.push(plan.add(object));
-        } else {
-          _results.push(void 0);
+          plan.add(object);
         }
       }
-      return _results;
+      return plan.fitToScreen();
     });
     $container = $("#container");
     $container.append(plan.renderer.domElement);
@@ -169,6 +199,23 @@
         strokeWidth: 4
       });
     }
+
+    /*
+    # OUTER WALLS
+    	Wall, 0, -580, 0, 240, 270, 44
+    	Wall, 44, 240, 990, 240, 270, 44
+           Wall, 990, -580, 990, 240, 270, 44 
+           Wall, 44, -536, 990, -536, 270, 44
+    # BATHROOM
+    	Wall, 315, 196, 315, -60, 270, 10
+    	Wall, 44, 10, 137, 10, 270, 10
+    	Wall, 211, 10, 305, 10, 270, 10
+    	Wall, 137, 0, 137, -60, 270, 10
+    	Wall, 221, 0, 221, -60, 270, 10
+    # BEDROOM
+           Wall, 315, -150, 315, -536, 270, 10
+    */
+
 
     Wall.prototype.length = function() {
       return Math.sqrt(Math.pow(this.startx - this.endx, 2) + Math.pow(this.starty - this.endy, 2));

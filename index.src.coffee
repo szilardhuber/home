@@ -64,6 +64,28 @@ class Plan
 		@layer.add object.polygon
 		@draw()
 
+	fitToScreen: () ->
+		xMin = 0
+		xMax = 0
+		yMin = 0
+		yMax = 0
+		for child in @layer.children
+			for point in child.getPoints()
+				if xMin > point.x
+					xMin = point.x
+				if xMax < point.x
+					xMax = point.x
+				if yMin > point.y
+					yMin = point.y
+				if yMax < point.y
+					yMax = point.y
+		scaleY = Math.abs(HEIGHT / (yMax - yMin))
+		scaleX = Math.abs(WIDTH / (xMax - xMin))
+		@stage.setScaleY(- Math.min(scaleX, scaleY))
+		@stage.setScaleX(Math.min(scaleX, scaleY))
+		@stage.setOffsetY(yMax)
+		@draw()
+
 $ ->
 	# set the scene size
 	WIDTH = 400
@@ -97,8 +119,9 @@ $ ->
 			tokens = line.split(',')
 			if tokens[0].trim().toLowerCase() == 'wall'
 				object = new Wall(parseInt(tokens[1].trim()), parseInt(tokens[2].trim()), parseInt(tokens[3].trim()), parseInt(tokens[4].trim()), parseInt(tokens[5].trim()), parseInt(tokens[6].trim()))
-				console.log object
 				plan.add object
+		plan.fitToScreen()
+
 
 
 
@@ -146,7 +169,21 @@ class Wall
 			stroke: 'black'
 			strokeWidth: 4
 
-
+	###
+# OUTER WALLS
+	Wall, 0, -580, 0, 240, 270, 44
+	Wall, 44, 240, 990, 240, 270, 44
+        Wall, 990, -580, 990, 240, 270, 44 
+        Wall, 44, -536, 990, -536, 270, 44
+# BATHROOM
+	Wall, 315, 196, 315, -60, 270, 10
+	Wall, 44, 10, 137, 10, 270, 10
+	Wall, 211, 10, 305, 10, 270, 10
+	Wall, 137, 0, 137, -60, 270, 10
+	Wall, 221, 0, 221, -60, 270, 10
+# BEDROOM
+        Wall, 315, -150, 315, -536, 270, 10
+   	###
 
 	length: () ->
 		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 
