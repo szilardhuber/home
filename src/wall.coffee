@@ -60,33 +60,29 @@ class Wall
    	###
 
 	generateTexture: () ->
-		# draw a circle in the center of the canvas
-		size = 256
-
 		# create canvas
 		canvas = document.createElement("canvas")
-		canvas.width = size
-		canvas.height = size
+		canvas.width = @width
+		canvas.height = @height
 
 		# get context
 		context = canvas.getContext("2d")
 
 		# draw background
-		context.fillStyle = "rgba( 255, 204, 102, 1 )"
-		context.fillRect 0, 0, size, size
+		context.fillStyle = "rgba( 177, 231, 76, 1 )"
+		context.fillRect 0, 0, @width, @height
 
-		# draw circle
-		centerX = size / 2
-		centerY = size / 2
-		radius = size / 4
-		context.beginPath()
-		context.arc centerX, centerY, radius, 0, 2 * Math.PI, false
-		context.fillStyle = "rgba( 51, 102, 153, 1 )"
+		# draw foreground
+		context.beginPath();
+		# Start from the top-left point.
+		context.moveTo(10, 10)
+		context.lineTo(40, 10)
+		context.lineTo(10, 200)
+		context.lineTo(10, 10)
+		context.fillStyle = "rgba( 100, 81, 67, 1 )"
 		context.fill()
+		#context.fillRect 0, 0, @width / 3, @height
 
-		#context.lineWidth = 10;
-		#context.strokeStyle = "red";
-		#context.stroke();
 		canvas
 
 
