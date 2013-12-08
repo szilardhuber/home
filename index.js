@@ -251,20 +251,19 @@
 
 
     Wall.prototype.generateTexture = function() {
-      var canvas, centerX, centerY, context, radius, size;
-      size = 256;
+      var canvas, context;
       canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
+      canvas.width = this.width;
+      canvas.height = this.height;
       context = canvas.getContext("2d");
-      context.fillStyle = "rgba( 255, 204, 102, 1 )";
-      context.fillRect(0, 0, size, size);
-      centerX = size / 2;
-      centerY = size / 2;
-      radius = size / 4;
+      context.fillStyle = "rgba( 177, 231, 76, 1 )";
+      context.fillRect(0, 0, this.width, this.height);
       context.beginPath();
-      context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-      context.fillStyle = "rgba( 51, 102, 153, 1 )";
+      context.moveTo(10, 10);
+      context.lineTo(40, 10);
+      context.lineTo(10, 200);
+      context.lineTo(10, 10);
+      context.fillStyle = "rgba( 100, 81, 67, 1 )";
       context.fill();
       return canvas;
     };
