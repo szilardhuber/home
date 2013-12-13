@@ -1,3 +1,53 @@
+class Parser
+	constructor: (text) ->
+		@count = 0
+		@built = 0
+		@objects = []
+		@lines = text.split('\n')
+		for line, i in @lines
+			line = line.trim()
+			if line.toLowerCase().substring(0, 2) == '# '
+				groupname = line.substring(2, line.length)
+				console.log "New group start here #{groupname}"
+			if line.trim().toLowerCase() == 'wall'
+				if object?
+					@objects.push object
+				@count++
+				object =[]
+				object['type'] = 'wall'
+			else if object?
+				tokens = line.split(':')
+				if tokens.length == 2
+					object[tokens[0].trim()] = tokens[1].trim()
+					#console.log "Property: #{tokens[0].trim()} = #{object[tokens[0].trim()]}"
+
+		if object?
+			@objects.push object 
+
+	ended: () ->
+		@built >= @count
+
+	get: () ->
+		object = @objects[@built]
+		#console.log object
+		switch object['type']
+			when 'wall'
+				@built++
+				if object['start']?
+					coords = object['start'].split(',')
+					startx = parseFloat(coords[0].trim())
+					starty = parseFloat(coords[1].trim())
+				if object['end']?
+					coords = object['end'].split(',')
+					endx = parseFloat(coords[0].trim())
+					endy = parseFloat(coords[1].trim())
+				if object['height']?
+					height = parseFloat(object['height'].trim())
+				if object['width']?
+					width = parseFloat(object['width'].trim())
+				if startx? and starty? and endx? and endy? and height? and width?
+					new Wall(startx, starty, endx, endy, height, width)
+
 class Plan
 	# set the scene size
 	WIDTH = 400
@@ -37,12 +87,6 @@ class Plan
 			container: floorplan
 			width: WIDTH
 			height: HEIGHT
-			scale: 
-				x: 1
-				y: -1
-			offset:
-				x: -50
-				y: 250
 
 		@layer = new Kinetic.Layer
 		@stage.add @layer
@@ -87,37 +131,6 @@ class Plan
 		@draw()
 
 $ ->
-	generateTexture = ->
-		# draw a circle in the center of the canvas
-		size = 256
-
-		# create canvas
-		canvas = document.createElement("canvas")
-		canvas.width = size
-		canvas.height = size
-
-		# get context
-		context = canvas.getContext("2d")
-
-		# draw background
-		context.fillStyle = "rgba( 255, 204, 102, 1 )"
-		context.fillRect 0, 0, size, size
-
-		# draw circle
-		centerX = size / 2
-		centerY = size / 2
-		radius = size / 4
-		context.beginPath()
-		context.arc centerX, centerY, radius, 0, 2 * Math.PI, false
-		context.fillStyle = "rgba( 51, 102, 153, 1 )"
-		context.fill()
-
-		#context.lineWidth = 10;
-		#context.strokeStyle = "red";
-		#context.stroke();
-		canvas
-
-
 	# set the scene size
 	WIDTH = 400
 	HEIGHT = 300
@@ -145,12 +158,14 @@ $ ->
 	$('#text').change (event) ->
 		plan.reset()
 		content = event.target.value
-		lines = content.split('\n')
-		for line in lines
-			tokens = line.split(',')
-			if tokens[0].trim().toLowerCase() == 'wall'
-				object = new Wall(parseInt(tokens[1].trim()), parseInt(tokens[2].trim()), parseInt(tokens[3].trim()), parseInt(tokens[4].trim()), parseInt(tokens[5].trim()), parseInt(tokens[6].trim()))
-				plan.add object
+		parser = new Parser(content)
+		while !parser.ended()
+			plan.add(parser.get())
+		#for line in lines
+		#	tokens = line.split(',')
+		#	if tokens[0].trim().toLowerCase() == 'wall'
+		#		object = new Wall(parseInt(tokens[1].trim()), parseInt(tokens[2].trim()), parseInt(tokens[3].trim()), parseInt(tokens[4].trim()), parseInt(tokens[5].trim()), parseInt(tokens[6].trim()))
+		#		plan.add object
 		plan.fitToScreen()
 
 
@@ -192,16 +207,16 @@ class Wall
 
 
 		materials = [
-			new THREE.MeshBasicMaterial(color: 0xAACC00)
-			new THREE.MeshBasicMaterial(color: 0xCCCC00)
 			new THREE.MeshBasicMaterial(color: 0xBBCC00)
-			new THREE.MeshBasicMaterial(color: 0xAACC00)
-			new THREE.MeshBasicMaterial(color: 0xCC0000)
-			new THREE.MeshBasicMaterial(color: 0xCCCC00)
+			new THREE.MeshBasicMaterial(color: 0xBBCC00)
+			new THREE.MeshBasicMaterial(color: 0xBBCC00) # top
+			new THREE.MeshBasicMaterial(color: 0xBBCC00)
+			material
+			new THREE.MeshBasicMaterial(color: 0xCCCC00) # left
 		]
 		# create the sphere's material
 		sphereMaterial = new THREE.MeshFaceMaterial(materials)
-		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), material)
+		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), sphereMaterial)
 
 		@mesh.rotation.y = Math.atan( (@endy - @starty) / (@endx - @startx) )
 		endx2 = @endx + @width * Math.sin(@mesh.rotation.y)
@@ -230,34 +245,85 @@ class Wall
 	Wall, 221, 0, 221, -60, 270, 10
 # BEDROOM
         Wall, 315, -150, 315, -536, 270, 10
+
+
+	# OUTER WALLS
+	## height: 270
+	## width: 44
+	## right.color: #B1E74C
+	## start.z: 0
+	## end.z: 0
+	Wall
+		start: 0, -580
+		end: 0, 240
+	Wall
+		start: 44, 240
+		end: 990, 240
+	Wall
+		start: 990, -580
+		end: 990, 240
+	Wall
+		start: 44, -536
+		end: 990, -536
+
+	# BATHROOM
+	## height: 270
+	## width: 10
+	## right.color: #B1E74C
+	## start.z: 0
+	## end.z: 0
+	Wall
+		start 315, 196
+		end: 315, -6§
+	Wall
+		start: 44, 10
+		end: 137, 10
+	Wall
+		start: 211, 10
+		end: 305, 10
+	Wall
+		start: 137, 0
+		end: 137, -60
+	Wall
+		start: 221, 0
+		end: 221, -60
+
+	# BEDROOM
+	Wall
+		start: 315, -150, 0
+		end: 315, -536, 0
+		height: 270
+		with: 10
+		right.color: #B1E74C
+
    	###
 
+   	# Add custom texture to the wall.
+   	# Currently we only support adding a background color and a rect with a color above it.
+   	# This is enough for the current needs but as this method uses a canvas later it could
+   	# be extended to arbitrary complexity.
 	generateTexture: () ->
-		# create canvas
+		# create the canvas that we will draw to and set the size to the size of the wall
 		canvas = document.createElement("canvas")
-		canvas.width = @width
+		canvas.width = @length()
 		canvas.height = @height
 
 		# get context
 		context = canvas.getContext("2d")
 
-		# draw background
+		# draw the background with the given color. 
+		# we draw it full sized on the canvas
 		context.fillStyle = "rgba( 177, 231, 76, 1 )"
-		context.fillRect 0, 0, @width, @height
+		context.fillRect 0, 0, @length(), @height
 
-		# draw foreground
-		context.beginPath();
-		# Start from the top-left point.
-		context.moveTo(10, 10)
-		context.lineTo(40, 10)
-		context.lineTo(10, 200)
-		context.lineTo(10, 10)
+		# draw foreground rect
 		context.fillStyle = "rgba( 100, 81, 67, 1 )"
-		context.fill()
-		#context.fillRect 0, 0, @width / 3, @height
+		context.fillRect 0, 0, @length() / 3, @height
 
+		# return the canvas
 		canvas
 
 
 	length: () ->
 		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 
+

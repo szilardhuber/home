@@ -14,16 +14,19 @@ varying vec3 vNormal;
 varying vec3 vViewPosition;
 void main() {
  vec4 tColor = texture2D( texture, vUv );
- vec4 tColor2 = texture2D( texture2, vUv );
- // hack in a fake pointlight at camera location, plus ambient
- vec3 normal = normalize( vNormal );
- vec3 lightDir = normalize( vViewPosition );
- float dotProduct = max( dot( normal, lightDir ), 0.0 ) + 0.2;
- gl_FragColor = vec4( mix( tColor.rgb, tColor2.rgb, tColor2.a ), 1.0 ) * dotProduct;
+ gl_FragColor = tColor;
 }
 
-</script></head><body><table><tr><td>2d</td><td>3d</td><td>Plan</td></tr><tr><td style="border:5px solid red;"><span id="floorplan"></span></td><td><span id="container"></span></td><td><span><textarea id="text" rows="22" cols="50">Wall, 0, 240, 270, 240, 270, 44
-Wall, 0, 0, 0, 240, 270, 44
-Wall, 270, 240, 270, 0, 270, 10
-Wall, 0, 0, 105, 0, 270, 10
-Wall, 175, 0, 270, 0, 270, 10</textarea></span></td></tr></table></body></html>
+</script></head><body><table><tr><td>2d</td><td>3d</td><td>Plan</td><td>test</td></tr><tr><td style="border:5px solid red;"><span id="floorplan"></span></td><td><span id="container"></span></td><td><span><textarea id="text" rows="22" cols="50">Wall
+	start: 0, 240, 0
+	end: 270, 240, 0
+	height: 270
+	width: 44
+Wall 
+	start: 0, 0, 0, 
+	end: 0, 240, 0,
+	height: 270
+	width: 44
+# Wall, 270, 240, 270, 0, 270, 10
+# Wall, 0, 0, 105, 0, 270, 10
+# Wall, 175, 0, 270, 0, 270, 10</textarea></span></td></tr></table></body></html>
