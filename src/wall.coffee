@@ -19,16 +19,16 @@ class Wall
 
 
 		materials = [
-			new THREE.MeshBasicMaterial(color: 0xAACC00)
-			new THREE.MeshBasicMaterial(color: 0xCCCC00)
 			new THREE.MeshBasicMaterial(color: 0xBBCC00)
-			new THREE.MeshBasicMaterial(color: 0xAACC00)
-			new THREE.MeshBasicMaterial(color: 0xCC0000)
-			new THREE.MeshBasicMaterial(color: 0xCCCC00)
+			new THREE.MeshBasicMaterial(color: 0xBBCC00)
+			new THREE.MeshBasicMaterial(color: 0xBBCC00) # top
+			new THREE.MeshBasicMaterial(color: 0xBBCC00)
+			material
+			new THREE.MeshBasicMaterial(color: 0xCCCC00) # left
 		]
 		# create the sphere's material
 		sphereMaterial = new THREE.MeshFaceMaterial(materials)
-		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), material)
+		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), sphereMaterial)
 
 		@mesh.rotation.y = Math.atan( (@endy - @starty) / (@endx - @startx) )
 		endx2 = @endx + @width * Math.sin(@mesh.rotation.y)
@@ -57,34 +57,85 @@ class Wall
 	Wall, 221, 0, 221, -60, 270, 10
 # BEDROOM
         Wall, 315, -150, 315, -536, 270, 10
+
+
+	# OUTER WALLS
+	## height: 270
+	## width: 44
+	## right.color: #B1E74C
+	## start.z: 0
+	## end.z: 0
+	Wall
+		start: 0, -580
+		end: 0, 240
+	Wall
+		start: 44, 240
+		end: 990, 240
+	Wall
+		start: 990, -580
+		end: 990, 240
+	Wall
+		start: 44, -536
+		end: 990, -536
+
+	# BATHROOM
+	## height: 270
+	## width: 10
+	## right.color: #B1E74C
+	## start.z: 0
+	## end.z: 0
+	Wall
+		start 315, 196
+		end: 315, -6§
+	Wall
+		start: 44, 10
+		end: 137, 10
+	Wall
+		start: 211, 10
+		end: 305, 10
+	Wall
+		start: 137, 0
+		end: 137, -60
+	Wall
+		start: 221, 0
+		end: 221, -60
+
+	# BEDROOM
+	Wall
+		start: 315, -150, 0
+		end: 315, -536, 0
+		height: 270
+		with: 10
+		right.color: #B1E74C
+
    	###
 
+   	# Add custom texture to the wall.
+   	# Currently we only support adding a background color and a rect with a color above it.
+   	# This is enough for the current needs but as this method uses a canvas later it could
+   	# be extended to arbitrary complexity.
 	generateTexture: () ->
-		# create canvas
+		# create the canvas that we will draw to and set the size to the size of the wall
 		canvas = document.createElement("canvas")
-		canvas.width = @width
+		canvas.width = @length()
 		canvas.height = @height
 
 		# get context
 		context = canvas.getContext("2d")
 
-		# draw background
+		# draw the background with the given color. 
+		# we draw it full sized on the canvas
 		context.fillStyle = "rgba( 177, 231, 76, 1 )"
-		context.fillRect 0, 0, @width, @height
+		context.fillRect 0, 0, @length(), @height
 
-		# draw foreground
-		context.beginPath();
-		# Start from the top-left point.
-		context.moveTo(10, 10)
-		context.lineTo(40, 10)
-		context.lineTo(10, 200)
-		context.lineTo(10, 10)
+		# draw foreground rect
 		context.fillStyle = "rgba( 100, 81, 67, 1 )"
-		context.fill()
-		#context.fillRect 0, 0, @width / 3, @height
+		context.fillRect 0, 0, @length() / 3, @height
 
+		# return the canvas
 		canvas
 
 
 	length: () ->
 		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 
+
