@@ -1,35 +1,15 @@
 class Wall
 
+	geometry: undefined
+	sampleMaterial = undefined
 	# 
 	constructor: (@startx, @starty, @endx, @endy, @height, @width) ->
 		texture = new THREE.Texture @generateTexture()
 		texture.needsUpdate = true
-		uniforms = 
-			texture: 
-				type: 't'
-				value: texture
-		attributes = {}
-
-		material = new THREE.ShaderMaterial
-			attributes: attributes
-			uniforms: uniforms
-			vertexShader: document.getElementById( 'vertex_shader' ).textContent
-			fragmentShader: document.getElementById( 'fragment_shader' ).textContent
-
-
-
-		materials = [
-			new THREE.MeshBasicMaterial(color: 0xBBCC00)
-			new THREE.MeshBasicMaterial(color: 0xBBCC00)
-			new THREE.MeshBasicMaterial(color: 0xBBCC00) # top
-			new THREE.MeshBasicMaterial(color: 0xBBCC00)
-			material
-			new THREE.MeshBasicMaterial(color: 0xCCCC00) # left
-		]
-		# create the sphere's material
-		sphereMaterial = new THREE.MeshFaceMaterial(materials)
-		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), sphereMaterial)
-
+		materials = [ @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture)]
+		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), new THREE.MeshFaceMaterial(materials))
+		@mesh.castShadow = true
+		@mesh.receiveShadow = true
 		@mesh.rotation.y = Math.atan( (@endy - @starty) / (@endx - @startx) )
 		endx2 = @endx + @width * Math.sin(@mesh.rotation.y)
 		endy2 = @endy - @width * Math.cos(@mesh.rotation.y)
@@ -43,78 +23,22 @@ class Wall
 			stroke: 'black'
 			strokeWidth: 4
 
-	###
-# OUTER WALLS
-	Wall, 0, -580, 0, 240, 270, 44
-	Wall, 44, 240, 990, 240, 270, 44
-        Wall, 990, -580, 990, 240, 270, 44 
-        Wall, 44, -536, 990, -536, 270, 44
-# BATHROOM
-	Wall, 315, 196, 315, -60, 270, 10
-	Wall, 44, 10, 137, 10, 270, 10
-	Wall, 211, 10, 305, 10, 270, 10
-	Wall, 137, 0, 137, -60, 270, 10
-	Wall, 221, 0, 221, -60, 270, 10
-# BEDROOM
-        Wall, 315, -150, 315, -536, 270, 10
+	# Utility function for creating a material with a given texture.
+	# Used for having different materials for different faces of the mesh and later we only have to change the texture object in the material.
+	getMaterial: (texture) ->
+		if not Wall.sampleMaterial?
+			Wall.sampleMaterial = new THREE.MeshLambertMaterial()
+		material = Wall.sampleMaterial.clone()
+		material.map = texture
+		material.wrapAroud = true
+		material
 
-
-	# OUTER WALLS
-	## height: 270
-	## width: 44
-	## right.color: #B1E74C
-	## start.z: 0
-	## end.z: 0
-	Wall
-		start: 0, -580
-		end: 0, 240
-	Wall
-		start: 44, 240
-		end: 990, 240
-	Wall
-		start: 990, -580
-		end: 990, 240
-	Wall
-		start: 44, -536
-		end: 990, -536
-
-	# BATHROOM
-	## height: 270
-	## width: 10
-	## right.color: #B1E74C
-	## start.z: 0
-	## end.z: 0
-	Wall
-		start 315, 196
-		end: 315, -6§
-	Wall
-		start: 44, 10
-		end: 137, 10
-	Wall
-		start: 211, 10
-		end: 305, 10
-	Wall
-		start: 137, 0
-		end: 137, -60
-	Wall
-		start: 221, 0
-		end: 221, -60
-
-	# BEDROOM
-	Wall
-		start: 315, -150, 0
-		end: 315, -536, 0
-		height: 270
-		with: 10
-		right.color: #B1E74C
-
-   	###
 
    	# Add custom texture to the wall.
    	# Currently we only support adding a background color and a rect with a color above it.
    	# This is enough for the current needs but as this method uses a canvas later it could
    	# be extended to arbitrary complexity.
-	generateTexture: () ->
+	generateTexture: (color = "#cccccc", pattern = undefined) ->
 		# create the canvas that we will draw to and set the size to the size of the wall
 		canvas = document.createElement("canvas")
 		canvas.width = @length()
@@ -125,17 +49,39 @@ class Wall
 
 		# draw the background with the given color. 
 		# we draw it full sized on the canvas
-		context.fillStyle = "rgba( 177, 231, 76, 1 )"
+		context.fillStyle = color
 		context.fillRect 0, 0, @length(), @height
 
-		# draw foreground rect
-		context.fillStyle = "rgba( 100, 81, 67, 1 )"
-		context.fillRect 0, 0, @length() / 3, @height
+		# draw foreground rect - TODO HSZ TEMPORARY DISABLED ASNEEDS SUPPORT FROM PARSER
+		if pattern?
+			context.fillStyle = "rgba( 100, 81, 67, 1 )"
+			context.beginPath()
+			context.moveTo pattern[0].x, pattern[0].y
+			for point in pattern[1..]
+				context.lineTo point.x , point.y
+			context.closePath()
+			context.fill()
 
 		# return the canvas
 		canvas
 
+	# Change the texture of the given side to the given color.
+	# Sides (looking from start -> end direction from above):
+	#		0 - 
+	#		1 -
+	#		2 - top 
+	#		3 - 
+	#		4 - right
+	#		5 - 
+	#		6 - left
+	changeTexture: (side, color, pattern = undefined) ->
+		texture = new THREE.Texture @generateTexture(color, pattern)
+		texture.needsUpdate = true
+		texture.name = "#{side}-#{color}-#{pattern}"
+		@mesh.material.materials[side].map = texture
+		@mesh.material.materials[side].needsUpdate = true
 
+	# Returns the length of the wall. Simple Euclidean distance between start and end.
 	length: () ->
 		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 
 

@@ -1,20 +1,33 @@
+class Point
+	constructor: (@x, @y) ->
+
 class Parser
 	constructor: (text) ->
 		@count = 0
 		@built = 0
 		@objects = []
 		@lines = text.split('\n')
+		globals = []
+		isInGlobalSection = false
 		for line, i in @lines
 			line = line.trim()
-			if line.toLowerCase().substring(0, 2) == '# '
+			if line.substring(0, 2) == '# '
 				groupname = line.substring(2, line.length)
-				console.log "New group start here #{groupname}"
-			if line.trim().toLowerCase() == 'wall'
+				isInGlobalSection = true
+				globals = []
+			else if isInGlobalSection and line.substring(0, 3) == '## '
+				line = line.substring(3, line.length)
+				tokens = line.split(':')
+				globals[tokens[0].trim()] = tokens[1].trim()
+			else if line.trim().toLowerCase() == 'wall'
+				isInGlobalSection = false
 				if object?
 					@objects.push object
 				@count++
 				object =[]
 				object['type'] = 'wall'
+				for key of globals
+					object[key] = globals[key]
 			else if object?
 				tokens = line.split(':')
 				if tokens.length == 2
@@ -29,7 +42,6 @@ class Parser
 
 	get: () ->
 		object = @objects[@built]
-		#console.log object
 		switch object['type']
 			when 'wall'
 				@built++
@@ -46,4 +58,18 @@ class Parser
 				if object['width']?
 					width = parseFloat(object['width'].trim())
 				if startx? and starty? and endx? and endy? and height? and width?
-					new Wall(startx, starty, endx, endy, height, width)
+					wall = new Wall(startx, starty, endx, endy, height, width)
+					if object['top.color']?
+						wall.changeTexture(2, object['top.color'])
+					if object['right.color']?
+						if startx == 44 and starty == 240 and endx == 990 and endy == 240
+							pattern = []
+							pattern.push new Point(160, 0)
+							pattern.push new Point(160, 270)
+							pattern.push new Point(270, 240)
+							wall.changeTexture(4, object['right.color'], pattern)
+						else
+							wall.changeTexture(4, object['right.color'])
+					if object['left.color']?
+						wall.changeTexture(5, object['left.color'])
+					wall

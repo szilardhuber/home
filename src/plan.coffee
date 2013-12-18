@@ -1,38 +1,75 @@
 class Plan
 	# set the scene size
-	WIDTH = 400
+	WIDTH = 600
 	HEIGHT = 300
 
 	# set some camera attributes
-	VIEW_ANGLE = 45
+	VIEW_ANGLE = 75
 	ASPECT = WIDTH / HEIGHT
-	NEAR = 0.1
+	NEAR = 1
 	FAR = 10000
 
 	constructor: () ->
-		@camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR)
-		@camera.rotation.x = -0.7
+
+		# start the renderer
+		@renderer = new THREE.WebGLRenderer()
+		@renderer.setSize WIDTH, HEIGHT
+		@renderer.setClearColor( 0xf0f0f0 )
+		@renderer.sortObjects = false
+		@renderer.shadowMapEnabled = true
+		@renderer.shadowMapType = THREE.PCFShadowMap
+
+		# merge the meshes into one geometry
+		@optimize = false
+
 		# the camera starts at 0,0,0
 		# so pull it back
+		@camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR)
 		@camera.position.z = 600
-		@camera.position.y = 600
-		@renderer = new THREE.WebGLRenderer()
-		# start the renderer
-		@renderer.setSize WIDTH, HEIGHT
+
+		# initialize controls
+		@controls = new THREE.FirstPersonControls( @camera, @renderer.domElement )
+		@controls.movementSpeed = 300
+		@controls.lookSpeed = 0.25
+		@controls.lookVertical = true
+		@controls.dragToLook = true
+		@controlsEnabled = true
+
+		# set up the scene
 		@scene = new THREE.Scene()
 		@scene.add @camera
-		# create a point light
-		@pointLight = new THREE.AmbientLight(0xEEEEEE)
 
-		# set its position
-		@pointLight.position.x = 10
-		@pointLight.position.y = 50
-		@pointLight.position.z = 130
+		# create lights
+		hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.9 )
+		hemiLight.color.setHSL( 0.6, 0.75, 0.5 )
+		hemiLight.groundColor.setHSL( 0.095, 0.5, 0.5 )
+		hemiLight.position.set( 0, 500, 0 )
+		@scene.add( hemiLight )
 
-		# add to the scene
-		@scene.add @pointLight
+		dirLight = new THREE.DirectionalLight( 0xffffff, 1 )
+		dirLight.position.set( -1, 0.75, 1 )
+		dirLight.position.multiplyScalar( 50)
+		dirLight.name = "dirlight"
+		# dirLight.shadowCameraVisible = true
+		@scene.add( dirLight )
+		dirLight.castShadow = true
+		dirLight.shadowMapWidth = dirLight.shadowMapHeight = 1024*2
+		d = 300
+		dirLight.shadowCameraLeft = -d
+		dirLight.shadowCameraRight = d
+		dirLight.shadowCameraTop = d
+		dirLight.shadowCameraBottom = -d
+		dirLight.shadowCameraFar = 3500
+		dirLight.shadowBias = -0.0001
+		dirLight.shadowDarkness = 0.15
 
-		# Floorplan
+		# add plane
+		Wall::geometry = new THREE.Geometry
+		@materials = []
+
+		@clock = new THREE.Clock()
+
+		# set up 2D floorplan
 		@stage = new Kinetic.Stage
 			container: floorplan
 			width: WIDTH
@@ -41,22 +78,37 @@ class Plan
 		@layer = new Kinetic.Layer
 		@stage.add @layer
 
+		# start rendering
+		@draw()
+
+
 	reset: () ->
+		@materialIndex = 4
 		@layer.removeChildren()
 		children = @scene.children[..]
 		for child in children
 			if child and child.name == "block"
 				@scene.remove child
 
-	draw: () ->
+	draw: () =>
+		setTimeout ( () => requestAnimationFrame(@draw) ) , 1000 / 30
+		if @controlsEnabled
+			@controls.update(@clock.getDelta())
 		@renderer.render @scene, @camera
 		@layer.batchDraw()
 
 	add: (object) ->
 		object.mesh.name = "block"
-		@scene.add object.mesh
+		console.log Wall::geometry.faces.length
+		if not @optimize
+			@scene.add object.mesh
+		else
+			for face, i in object.mesh.geometry.faces
+				if i % 2 == 0
+					@materials.push object.mesh.material.materials[i / 2]
+				face.materialIndex = @materials.length - 1
+			THREE.GeometryUtils.merge Wall::geometry, object.mesh
 		@layer.add object.polygon
-		@draw()
 
 	fitToScreen: () ->
 		xMin = 0
@@ -78,7 +130,6 @@ class Plan
 		@stage.setScaleY(- Math.min(scaleX, scaleY))
 		@stage.setScaleX(Math.min(scaleX, scaleY))
 		@stage.setOffsetY(yMax)
-		@draw()
 
 $ ->
 	# set the scene size
@@ -95,15 +146,19 @@ $ ->
 
 	$('body').keypress (event) ->
 		switch event.charCode
-			when 119 # w - up
-				plan.camera.position.z -= 10
-			when 97 # a - left
-				plan.camera.position.x += 10
-			when 115 # s - down
-				plan.camera.position.z += 10
-			when 100 # d - right
-				plan.camera.position.x -= 10
-		plan.renderer.render plan.scene, plan.camera
+			when 99 # c - switch FPS mode
+				if plan.controlsEnabled
+					plan.controlsEnabled = false
+					plan.savedCameraPosition = plan.camera.position
+					plan.camera.position = new THREE.Vector3(400, 600, 500)
+					plan.camera.lookAt new THREE.Vector3(400, 0, 0)
+				else
+					plan.controlsEnabled = true
+					if plan.savedCameraPosition?
+						plan.camera.position = plan.savedCameraPosition
+					else
+						plan.camera.position = new THREE.Vector3(0, 0, 0)
+
 
 	$('#text').change (event) ->
 		plan.reset()
@@ -111,11 +166,11 @@ $ ->
 		parser = new Parser(content)
 		while !parser.ended()
 			plan.add(parser.get())
-		#for line in lines
-		#	tokens = line.split(',')
-		#	if tokens[0].trim().toLowerCase() == 'wall'
-		#		object = new Wall(parseInt(tokens[1].trim()), parseInt(tokens[2].trim()), parseInt(tokens[3].trim()), parseInt(tokens[4].trim()), parseInt(tokens[5].trim()), parseInt(tokens[6].trim()))
-		#		plan.add object
+		mesh = new THREE.Mesh( Wall::geometry, new THREE.MeshFaceMaterial( plan.materials ) )
+		mesh.castShadow = true
+		mesh.receiveShadow = true
+		console.log plan.materials
+		plan.scene.add mesh
 		plan.fitToScreen()
 
 
