@@ -38,7 +38,7 @@ class Wall
    	# Currently we only support adding a background color and a rect with a color above it.
    	# This is enough for the current needs but as this method uses a canvas later it could
    	# be extended to arbitrary complexity.
-	generateTexture: (color = "#cccccc", pattern = undefined) ->
+	generateTexture: (color = "#cccccc", pattern = undefined, patternColor = undefined) ->
 		# create the canvas that we will draw to and set the size to the size of the wall
 		canvas = document.createElement("canvas")
 		canvas.width = @length()
@@ -52,9 +52,9 @@ class Wall
 		context.fillStyle = color
 		context.fillRect 0, 0, @length(), @height
 
-		# draw foreground rect - TODO HSZ TEMPORARY DISABLED ASNEEDS SUPPORT FROM PARSER
+		# draw foreground rect - TODO I need more than one patterns
 		if pattern?
-			context.fillStyle = "rgba( 100, 81, 67, 1 )"
+			context.fillStyle = patternColor
 			context.beginPath()
 			context.moveTo pattern[0].x, pattern[0].y
 			for point in pattern[1..]
@@ -67,15 +67,14 @@ class Wall
 
 	# Change the texture of the given side to the given color.
 	# Sides (looking from start -> end direction from above):
-	#		0 - 
-	#		1 -
+	#		0 - rear
+	#		1 - front
 	#		2 - top 
-	#		3 - 
+	#		3 - bottom
 	#		4 - right
-	#		5 - 
-	#		6 - left
-	changeTexture: (side, color, pattern = undefined) ->
-		texture = new THREE.Texture @generateTexture(color, pattern)
+	#		5 - left
+	changeTexture: (side, color, pattern = undefined, patternColor = undefined) ->
+		texture = new THREE.Texture @generateTexture(color, pattern, patternColor)
 		texture.needsUpdate = true
 		texture.name = "#{side}-#{color}-#{pattern}"
 		@mesh.material.materials[side].map = texture
