@@ -84,16 +84,26 @@
           }
           if ((startx != null) && (starty != null) && (endx != null) && (endy != null) && (height != null) && (width != null)) {
             wall = new Wall(startx, starty, endx, endy, height, width);
+            if (object['rear.color'] != null) {
+              wall.changeTexture(0, object['rear.color']);
+            }
+            if (object['front.color'] != null) {
+              wall.changeTexture(1, object['front.color']);
+            }
             if (object['top.color'] != null) {
               wall.changeTexture(2, object['top.color']);
+            }
+            if (object['bottom.color'] != null) {
+              wall.changeTexture(3, object['bottom.color']);
             }
             if (object['right.color'] != null) {
               if (startx === 44 && starty === 240 && endx === 990 && endy === 240) {
                 pattern = [];
                 pattern.push(new Point(160, 0));
                 pattern.push(new Point(160, 270));
-                pattern.push(new Point(270, 240));
-                wall.changeTexture(4, object['right.color'], pattern);
+                pattern.push(new Point(260, 270));
+                pattern.push(new Point(260, 0));
+                wall.changeTexture(4, object['right.color'], pattern, "#645143");
               } else {
                 wall.changeTexture(4, object['right.color']);
               }
@@ -359,13 +369,16 @@
       return material;
     };
 
-    Wall.prototype.generateTexture = function(color, pattern) {
+    Wall.prototype.generateTexture = function(color, pattern, patternColor) {
       var canvas, context, point, _i, _len, _ref;
       if (color == null) {
         color = "#cccccc";
       }
       if (pattern == null) {
         pattern = void 0;
+      }
+      if (patternColor == null) {
+        patternColor = void 0;
       }
       canvas = document.createElement("canvas");
       canvas.width = this.length();
@@ -374,7 +387,7 @@
       context.fillStyle = color;
       context.fillRect(0, 0, this.length(), this.height);
       if (pattern != null) {
-        context.fillStyle = "rgba( 100, 81, 67, 1 )";
+        context.fillStyle = patternColor;
         context.beginPath();
         context.moveTo(pattern[0].x, pattern[0].y);
         _ref = pattern.slice(1);
@@ -388,12 +401,15 @@
       return canvas;
     };
 
-    Wall.prototype.changeTexture = function(side, color, pattern) {
+    Wall.prototype.changeTexture = function(side, color, pattern, patternColor) {
       var texture;
       if (pattern == null) {
         pattern = void 0;
       }
-      texture = new THREE.Texture(this.generateTexture(color, pattern));
+      if (patternColor == null) {
+        patternColor = void 0;
+      }
+      texture = new THREE.Texture(this.generateTexture(color, pattern, patternColor));
       texture.needsUpdate = true;
       texture.name = "" + side + "-" + color + "-" + pattern;
       this.mesh.material.materials[side].map = texture;
