@@ -1,20 +1,33 @@
+class Point
+	constructor: (@x, @y) ->
+
 class Parser
 	constructor: (text) ->
 		@count = 0
 		@built = 0
 		@objects = []
 		@lines = text.split('\n')
+		globals = []
+		isInGlobalSection = false
 		for line, i in @lines
 			line = line.trim()
-			if line.toLowerCase().substring(0, 2) == '# '
+			if line.substring(0, 2) == '# '
 				groupname = line.substring(2, line.length)
-				console.log "New group start here #{groupname}"
-			if line.trim().toLowerCase() == 'wall'
+				isInGlobalSection = true
+				globals = []
+			else if isInGlobalSection and line.substring(0, 3) == '## '
+				line = line.substring(3, line.length)
+				tokens = line.split(':')
+				globals[tokens[0].trim()] = tokens[1].trim()
+			else if line.trim().toLowerCase() == 'wall'
+				isInGlobalSection = false
 				if object?
 					@objects.push object
 				@count++
 				object =[]
 				object['type'] = 'wall'
+				for key of globals
+					object[key] = globals[key]
 			else if object?
 				tokens = line.split(':')
 				if tokens.length == 2
@@ -29,7 +42,6 @@ class Parser
 
 	get: () ->
 		object = @objects[@built]
-		#console.log object
 		switch object['type']
 			when 'wall'
 				@built++
@@ -46,43 +58,94 @@ class Parser
 				if object['width']?
 					width = parseFloat(object['width'].trim())
 				if startx? and starty? and endx? and endy? and height? and width?
-					new Wall(startx, starty, endx, endy, height, width)
+					wall = new Wall(startx, starty, endx, endy, height, width)
+					if object['top.color']?
+						wall.changeTexture(2, object['top.color'])
+					if object['right.color']?
+						if startx == 44 and starty == 240 and endx == 990 and endy == 240
+							pattern = []
+							pattern.push new Point(160, 0)
+							pattern.push new Point(160, 270)
+							pattern.push new Point(270, 240)
+							wall.changeTexture(4, object['right.color'], pattern)
+						else
+							wall.changeTexture(4, object['right.color'])
+					if object['left.color']?
+						wall.changeTexture(5, object['left.color'])
+					wall
 
 class Plan
 	# set the scene size
-	WIDTH = 400
+	WIDTH = 600
 	HEIGHT = 300
 
 	# set some camera attributes
-	VIEW_ANGLE = 45
+	VIEW_ANGLE = 75
 	ASPECT = WIDTH / HEIGHT
-	NEAR = 0.1
+	NEAR = 1
 	FAR = 10000
 
 	constructor: () ->
-		@camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR)
-		@camera.rotation.x = -0.7
+
+		# start the renderer
+		@renderer = new THREE.WebGLRenderer()
+		@renderer.setSize WIDTH, HEIGHT
+		@renderer.setClearColor( 0xf0f0f0 )
+		@renderer.sortObjects = false
+		@renderer.shadowMapEnabled = true
+		@renderer.shadowMapType = THREE.PCFShadowMap
+
+		# merge the meshes into one geometry
+		@optimize = false
+
 		# the camera starts at 0,0,0
 		# so pull it back
+		@camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR)
 		@camera.position.z = 600
-		@camera.position.y = 600
-		@renderer = new THREE.WebGLRenderer()
-		# start the renderer
-		@renderer.setSize WIDTH, HEIGHT
+
+		# initialize controls
+		@controls = new THREE.FirstPersonControls( @camera, @renderer.domElement )
+		@controls.movementSpeed = 300
+		@controls.lookSpeed = 0.25
+		@controls.lookVertical = true
+		@controls.dragToLook = true
+		@controlsEnabled = true
+
+		# set up the scene
 		@scene = new THREE.Scene()
 		@scene.add @camera
-		# create a point light
-		@pointLight = new THREE.AmbientLight(0xEEEEEE)
 
-		# set its position
-		@pointLight.position.x = 10
-		@pointLight.position.y = 50
-		@pointLight.position.z = 130
+		# create lights
+		hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.9 )
+		hemiLight.color.setHSL( 0.6, 0.75, 0.5 )
+		hemiLight.groundColor.setHSL( 0.095, 0.5, 0.5 )
+		hemiLight.position.set( 0, 500, 0 )
+		@scene.add( hemiLight )
 
-		# add to the scene
-		@scene.add @pointLight
+		dirLight = new THREE.DirectionalLight( 0xffffff, 1 )
+		dirLight.position.set( -1, 0.75, 1 )
+		dirLight.position.multiplyScalar( 50)
+		dirLight.name = "dirlight"
+		# dirLight.shadowCameraVisible = true
+		@scene.add( dirLight )
+		dirLight.castShadow = true
+		dirLight.shadowMapWidth = dirLight.shadowMapHeight = 1024*2
+		d = 300
+		dirLight.shadowCameraLeft = -d
+		dirLight.shadowCameraRight = d
+		dirLight.shadowCameraTop = d
+		dirLight.shadowCameraBottom = -d
+		dirLight.shadowCameraFar = 3500
+		dirLight.shadowBias = -0.0001
+		dirLight.shadowDarkness = 0.15
 
-		# Floorplan
+		# add plane
+		Wall::geometry = new THREE.Geometry
+		@materials = []
+
+		@clock = new THREE.Clock()
+
+		# set up 2D floorplan
 		@stage = new Kinetic.Stage
 			container: floorplan
 			width: WIDTH
@@ -91,22 +154,37 @@ class Plan
 		@layer = new Kinetic.Layer
 		@stage.add @layer
 
+		# start rendering
+		@draw()
+
+
 	reset: () ->
+		@materialIndex = 4
 		@layer.removeChildren()
 		children = @scene.children[..]
 		for child in children
 			if child and child.name == "block"
 				@scene.remove child
 
-	draw: () ->
+	draw: () =>
+		setTimeout ( () => requestAnimationFrame(@draw) ) , 1000 / 30
+		if @controlsEnabled
+			@controls.update(@clock.getDelta())
 		@renderer.render @scene, @camera
 		@layer.batchDraw()
 
 	add: (object) ->
 		object.mesh.name = "block"
-		@scene.add object.mesh
+		console.log Wall::geometry.faces.length
+		if not @optimize
+			@scene.add object.mesh
+		else
+			for face, i in object.mesh.geometry.faces
+				if i % 2 == 0
+					@materials.push object.mesh.material.materials[i / 2]
+				face.materialIndex = @materials.length - 1
+			THREE.GeometryUtils.merge Wall::geometry, object.mesh
 		@layer.add object.polygon
-		@draw()
 
 	fitToScreen: () ->
 		xMin = 0
@@ -128,7 +206,6 @@ class Plan
 		@stage.setScaleY(- Math.min(scaleX, scaleY))
 		@stage.setScaleX(Math.min(scaleX, scaleY))
 		@stage.setOffsetY(yMax)
-		@draw()
 
 $ ->
 	# set the scene size
@@ -145,15 +222,19 @@ $ ->
 
 	$('body').keypress (event) ->
 		switch event.charCode
-			when 119 # w - up
-				plan.camera.position.z -= 10
-			when 97 # a - left
-				plan.camera.position.x += 10
-			when 115 # s - down
-				plan.camera.position.z += 10
-			when 100 # d - right
-				plan.camera.position.x -= 10
-		plan.renderer.render plan.scene, plan.camera
+			when 99 # c - switch FPS mode
+				if plan.controlsEnabled
+					plan.controlsEnabled = false
+					plan.savedCameraPosition = plan.camera.position
+					plan.camera.position = new THREE.Vector3(400, 600, 500)
+					plan.camera.lookAt new THREE.Vector3(400, 0, 0)
+				else
+					plan.controlsEnabled = true
+					if plan.savedCameraPosition?
+						plan.camera.position = plan.savedCameraPosition
+					else
+						plan.camera.position = new THREE.Vector3(0, 0, 0)
+
 
 	$('#text').change (event) ->
 		plan.reset()
@@ -161,11 +242,11 @@ $ ->
 		parser = new Parser(content)
 		while !parser.ended()
 			plan.add(parser.get())
-		#for line in lines
-		#	tokens = line.split(',')
-		#	if tokens[0].trim().toLowerCase() == 'wall'
-		#		object = new Wall(parseInt(tokens[1].trim()), parseInt(tokens[2].trim()), parseInt(tokens[3].trim()), parseInt(tokens[4].trim()), parseInt(tokens[5].trim()), parseInt(tokens[6].trim()))
-		#		plan.add object
+		mesh = new THREE.Mesh( Wall::geometry, new THREE.MeshFaceMaterial( plan.materials ) )
+		mesh.castShadow = true
+		mesh.receiveShadow = true
+		console.log plan.materials
+		plan.scene.add mesh
 		plan.fitToScreen()
 
 
@@ -188,36 +269,16 @@ $ ->
 
 class Wall
 
+	geometry: undefined
+	sampleMaterial = undefined
 	# 
 	constructor: (@startx, @starty, @endx, @endy, @height, @width) ->
 		texture = new THREE.Texture @generateTexture()
 		texture.needsUpdate = true
-		uniforms = 
-			texture: 
-				type: 't'
-				value: texture
-		attributes = {}
-
-		material = new THREE.ShaderMaterial
-			attributes: attributes
-			uniforms: uniforms
-			vertexShader: document.getElementById( 'vertex_shader' ).textContent
-			fragmentShader: document.getElementById( 'fragment_shader' ).textContent
-
-
-
-		materials = [
-			new THREE.MeshBasicMaterial(color: 0xBBCC00)
-			new THREE.MeshBasicMaterial(color: 0xBBCC00)
-			new THREE.MeshBasicMaterial(color: 0xBBCC00) # top
-			new THREE.MeshBasicMaterial(color: 0xBBCC00)
-			material
-			new THREE.MeshBasicMaterial(color: 0xCCCC00) # left
-		]
-		# create the sphere's material
-		sphereMaterial = new THREE.MeshFaceMaterial(materials)
-		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), sphereMaterial)
-
+		materials = [ @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture)]
+		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), new THREE.MeshFaceMaterial(materials))
+		@mesh.castShadow = true
+		@mesh.receiveShadow = true
 		@mesh.rotation.y = Math.atan( (@endy - @starty) / (@endx - @startx) )
 		endx2 = @endx + @width * Math.sin(@mesh.rotation.y)
 		endy2 = @endy - @width * Math.cos(@mesh.rotation.y)
@@ -231,78 +292,22 @@ class Wall
 			stroke: 'black'
 			strokeWidth: 4
 
-	###
-# OUTER WALLS
-	Wall, 0, -580, 0, 240, 270, 44
-	Wall, 44, 240, 990, 240, 270, 44
-        Wall, 990, -580, 990, 240, 270, 44 
-        Wall, 44, -536, 990, -536, 270, 44
-# BATHROOM
-	Wall, 315, 196, 315, -60, 270, 10
-	Wall, 44, 10, 137, 10, 270, 10
-	Wall, 211, 10, 305, 10, 270, 10
-	Wall, 137, 0, 137, -60, 270, 10
-	Wall, 221, 0, 221, -60, 270, 10
-# BEDROOM
-        Wall, 315, -150, 315, -536, 270, 10
+	# Utility function for creating a material with a given texture.
+	# Used for having different materials for different faces of the mesh and later we only have to change the texture object in the material.
+	getMaterial: (texture) ->
+		if not Wall.sampleMaterial?
+			Wall.sampleMaterial = new THREE.MeshLambertMaterial()
+		material = Wall.sampleMaterial.clone()
+		material.map = texture
+		material.wrapAroud = true
+		material
 
-
-	# OUTER WALLS
-	## height: 270
-	## width: 44
-	## right.color: #B1E74C
-	## start.z: 0
-	## end.z: 0
-	Wall
-		start: 0, -580
-		end: 0, 240
-	Wall
-		start: 44, 240
-		end: 990, 240
-	Wall
-		start: 990, -580
-		end: 990, 240
-	Wall
-		start: 44, -536
-		end: 990, -536
-
-	# BATHROOM
-	## height: 270
-	## width: 10
-	## right.color: #B1E74C
-	## start.z: 0
-	## end.z: 0
-	Wall
-		start 315, 196
-		end: 315, -6§
-	Wall
-		start: 44, 10
-		end: 137, 10
-	Wall
-		start: 211, 10
-		end: 305, 10
-	Wall
-		start: 137, 0
-		end: 137, -60
-	Wall
-		start: 221, 0
-		end: 221, -60
-
-	# BEDROOM
-	Wall
-		start: 315, -150, 0
-		end: 315, -536, 0
-		height: 270
-		with: 10
-		right.color: #B1E74C
-
-   	###
 
    	# Add custom texture to the wall.
    	# Currently we only support adding a background color and a rect with a color above it.
    	# This is enough for the current needs but as this method uses a canvas later it could
    	# be extended to arbitrary complexity.
-	generateTexture: () ->
+	generateTexture: (color = "#cccccc", pattern = undefined) ->
 		# create the canvas that we will draw to and set the size to the size of the wall
 		canvas = document.createElement("canvas")
 		canvas.width = @length()
@@ -313,17 +318,39 @@ class Wall
 
 		# draw the background with the given color. 
 		# we draw it full sized on the canvas
-		context.fillStyle = "rgba( 177, 231, 76, 1 )"
+		context.fillStyle = color
 		context.fillRect 0, 0, @length(), @height
 
-		# draw foreground rect
-		context.fillStyle = "rgba( 100, 81, 67, 1 )"
-		context.fillRect 0, 0, @length() / 3, @height
+		# draw foreground rect - TODO HSZ TEMPORARY DISABLED ASNEEDS SUPPORT FROM PARSER
+		if pattern?
+			context.fillStyle = "rgba( 100, 81, 67, 1 )"
+			context.beginPath()
+			context.moveTo pattern[0].x, pattern[0].y
+			for point in pattern[1..]
+				context.lineTo point.x , point.y
+			context.closePath()
+			context.fill()
 
 		# return the canvas
 		canvas
 
+	# Change the texture of the given side to the given color.
+	# Sides (looking from start -> end direction from above):
+	#		0 - 
+	#		1 -
+	#		2 - top 
+	#		3 - 
+	#		4 - right
+	#		5 - 
+	#		6 - left
+	changeTexture: (side, color, pattern = undefined) ->
+		texture = new THREE.Texture @generateTexture(color, pattern)
+		texture.needsUpdate = true
+		texture.name = "#{side}-#{color}-#{pattern}"
+		@mesh.material.materials[side].map = texture
+		@mesh.material.materials[side].needsUpdate = true
 
+	# Returns the length of the wall. Simple Euclidean distance between start and end.
 	length: () ->
 		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 
 
