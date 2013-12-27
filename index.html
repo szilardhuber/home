@@ -17,7 +17,7 @@ void main() {
  gl_FragColor = tColor;
 }
 
-</script></head><body><table><tr><td>2d</td><td>3d</td><td>Plan</td><td>test</td></tr><tr><td style="border:5px solid red;"><span id="floorplan"></span></td><td><div id="container"></div></td><td><span><textarea id="text" rows="22" cols="50"></textarea># OUTER WALLS
+</script></head><body><table><tr><td>2d</td><td>3d</td><td>Plan</td><td>test</td></tr><tr><td style="border:5px solid red;"><span id="floorplan"></span></td><td><div id="container"></div></td><td><span><textarea id="text" rows="22" cols="50"># OUTER WALLS
 	## height: 270
 	## width: 44
 	## right.color: #B1E74C
@@ -39,7 +39,7 @@ void main() {
 		start: 44, -496
 		end: 990, -496
  
-# BATHROOM
+# BATHROOM WALLS
 	## height: 270
 	## width: 10
 	## right.color: #B1E74C
@@ -54,6 +54,14 @@ void main() {
 	Wall
 		start: 208, -73
 		end: 314, -73
+# BATHROOM SLAB
+	## height: 10
+	## top.color: #FF0000 
+	Slab
+		point: 0, -73, 0
+		point: 0, 240, 0
+		point: 324, 240, 0
+		point: 324, -73, 0
 |
 # BEDROOM
 	## right.color: #CCCCCC
@@ -105,4 +113,4 @@ void main() {
 		end: 852.5 , -295
 	Wall
 		start: 927.5 , -295
-		end: 990, -295</span></td></tr></table></body></html>
+		end: 990, -295</textarea></span></td></tr></table></body></html>
