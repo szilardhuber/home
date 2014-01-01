@@ -1,5 +1,5 @@
 (function() {
-  var Parser, Plan, Point, Wall,
+  var Parser, Plan, Point, Slab, Wall,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   Point = (function() {
@@ -14,7 +14,7 @@
 
   Parser = (function() {
     function Parser(text) {
-      var globals, groupname, i, isInGlobalSection, key, line, object, tokens, _i, _len, _ref;
+      var arrayTyped, globals, groupname, i, isInGlobalSection, key, line, name, object, tokens, v, value, _i, _len, _ref, _ref1;
       this.count = 0;
       this.built = 0;
       this.objects = [];
@@ -44,10 +44,37 @@
           for (key in globals) {
             object[key] = globals[key];
           }
+        } else if (line.trim().toLowerCase() === 'slab') {
+          isInGlobalSection = false;
+          if (object != null) {
+            this.objects.push(object);
+          }
+          this.count++;
+          object = [];
+          object['type'] = 'slab';
+          for (key in globals) {
+            object[key] = globals[key];
+          }
         } else if (object != null) {
           tokens = line.split(':');
           if (tokens.length === 2) {
-            object[tokens[0].trim()] = tokens[1].trim();
+            arrayTyped = false;
+            name = tokens[0].trim();
+            if (name.substring(0, 1) === "-") {
+              arrayTyped = true;
+              name = name.substring(2, name.length);
+            }
+            value = tokens[1].trim();
+            if (!(name in object) || !arrayTyped) {
+              object[name] = value;
+            } else if (((_ref1 = object[name]) != null ? _ref1.push : void 0) != null) {
+              object[name].push(value);
+            } else {
+              v = [];
+              v.push(object[name]);
+              v.push(value);
+              object[name] = v;
+            }
           }
         }
       }
@@ -61,7 +88,7 @@
     };
 
     Parser.prototype.get = function() {
-      var coords, endx, endy, height, object, pattern, startx, starty, wall, width;
+      var coords, endx, endy, height, object, pattern, points, startx, starty, vertex, vertices, wall, width, _i, _len, _ref;
       object = this.objects[this.built];
       switch (object['type']) {
         case 'wall':
@@ -113,6 +140,18 @@
             }
             return wall;
           }
+          break;
+        case 'slab':
+          console.log(object['point']);
+          this.built++;
+          vertices = [];
+          _ref = object['point'];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            vertex = _ref[_i];
+            points = vertex.split(',');
+            vertices.push(new THREE.Vector3(parseInt(points[0].trim()), parseInt(points[1].trim()), parseInt(points[2].trim())));
+          }
+          return new Slab(vertices, 40, object['color']);
       }
     };
 
@@ -234,7 +273,9 @@
         }
         THREE.GeometryUtils.merge(Wall.prototype.geometry, object.mesh);
       }
-      return this.layer.add(object.polygon);
+      if (object.polygon != null) {
+        return this.layer.add(object.polygon);
+      }
     };
 
     Plan.prototype.fitToScreen = function() {
@@ -321,6 +362,114 @@
     $('textarea#text').change();
     return plan.draw();
   });
+
+  Slab = (function() {
+    var sampleMaterial;
+
+    Slab.prototype.geometry = void 0;
+
+    sampleMaterial = void 0;
+
+    function Slab(vertices, height, color) {
+      var material, texture;
+      this.vertices = vertices;
+      this.height = height;
+      if (color == null) {
+        color = void 0;
+      }
+      texture = new THREE.Texture(this.generateTexture(color));
+      texture.needsUpdate = true;
+      material = this.getMaterial(texture);
+      this.mesh = new THREE.Mesh(new this.createGeometry(this.vertices, this.height), material);
+      this.mesh.castShadow = true;
+      this.mesh.receiveShadow = true;
+      /*
+      		# TODO display slabs on 2d
+      		@polygon = new Kinetic.Polygon
+      			points: [@startx, @starty, @endx, @endy, endx2, endy2, startx2, starty2]
+      			fill: 'green'
+      			stroke: 'black'
+      			strokeWidth: 4
+      */
+
+    }
+
+    Slab.prototype.createGeometry = function(polygon, height) {
+      var vertex, vertices, _i, _len;
+      vertices = [];
+      for (_i = 0, _len = polygon.length; _i < _len; _i++) {
+        vertex = polygon[_i];
+        vertices.push(new THREE.Vector3(vertex.x, vertex.z, vertex.y));
+        vertices.push(new THREE.Vector3(vertex.x, vertex.z + height, vertex.y));
+      }
+      return new THREE.ConvexGeometry(vertices);
+    };
+
+    Slab.prototype.getMaterial = function(texture) {
+      var material;
+      if (Slab.sampleMaterial == null) {
+        Slab.sampleMaterial = new THREE.MeshLambertMaterial();
+      }
+      material = Slab.sampleMaterial.clone();
+      material.map = texture;
+      material.wrapAroud = true;
+      return material;
+    };
+
+    Slab.prototype.generateTexture = function(color, pattern, patternColor) {
+      var canvas, context, point, _i, _len, _ref;
+      if (pattern == null) {
+        pattern = void 0;
+      }
+      if (patternColor == null) {
+        patternColor = void 0;
+      }
+      if (color == null) {
+        color = '#FFFFFF';
+      }
+      canvas = document.createElement("canvas");
+      canvas.width = 100;
+      canvas.height = 100;
+      context = canvas.getContext("2d");
+      context.fillStyle = color;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      if (pattern != null) {
+        context.fillStyle = patternColor;
+        context.beginPath();
+        context.moveTo(pattern[0].x, pattern[0].y);
+        _ref = pattern.slice(1);
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          point = _ref[_i];
+          context.lineTo(point.x, point.y);
+        }
+        context.closePath();
+        context.fill();
+      }
+      return canvas;
+    };
+
+    Slab.prototype.changeTexture = function(side, color, pattern, patternColor) {
+      var texture;
+      if (pattern == null) {
+        pattern = void 0;
+      }
+      if (patternColor == null) {
+        patternColor = void 0;
+      }
+      texture = new THREE.Texture(this.generateTexture(color, pattern, patternColor));
+      texture.needsUpdate = true;
+      texture.name = "" + side + "-" + color + "-" + pattern;
+      this.mesh.material.materials[side].map = texture;
+      return this.mesh.material.materials[side].needsUpdate = true;
+    };
+
+    Slab.prototype.length = function() {
+      return Math.sqrt(Math.pow(this.startx - this.endx, 2) + Math.pow(this.starty - this.endy, 2));
+    };
+
+    return Slab;
+
+  })();
 
   Wall = (function() {
     var sampleMaterial;
