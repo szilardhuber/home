@@ -108,7 +108,8 @@ class Plan
 					@materials.push object.mesh.material.materials[i / 2]
 				face.materialIndex = @materials.length - 1
 			THREE.GeometryUtils.merge Wall::geometry, object.mesh
-		@layer.add object.polygon
+		if object.polygon?
+			@layer.add object.polygon
 
 	fitToScreen: () ->
 		xMin = 0

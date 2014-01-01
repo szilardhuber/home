@@ -11,14 +11,17 @@ class Parser
 		isInGlobalSection = false
 		for line, i in @lines
 			line = line.trim()
+			# Section header - name of the room
 			if line.substring(0, 2) == '# '
 				groupname = line.substring(2, line.length)
 				isInGlobalSection = true
 				globals = []
+			# Section global variable
 			else if isInGlobalSection and line.substring(0, 3) == '## '
 				line = line.substring(3, line.length)
 				tokens = line.split(':')
 				globals[tokens[0].trim()] = tokens[1].trim()
+			# Wall
 			else if line.trim().toLowerCase() == 'wall'
 				isInGlobalSection = false
 				if object?
@@ -28,11 +31,34 @@ class Parser
 				object['type'] = 'wall'
 				for key of globals
 					object[key] = globals[key]
+			# Slab
+			else if line.trim().toLowerCase() == 'slab'
+				isInGlobalSection = false
+				if object?
+					@objects.push object
+				@count++
+				object =[]
+				object['type'] = 'slab'
+				for key of globals
+					object[key] = globals[key]
 			else if object?
 				tokens = line.split(':')
 				if tokens.length == 2
-					object[tokens[0].trim()] = tokens[1].trim()
-					#console.log "Property: #{tokens[0].trim()} = #{object[tokens[0].trim()]}"
+					arrayTyped = false
+					name = tokens[0].trim()
+					if name.substring(0, 1) == "-"
+						arrayTyped = true
+						name = name.substring(2, name.length)
+					value = tokens[1].trim()
+					if name not of object or not arrayTyped
+						object[name] = value
+					else if object[name]?.push?
+						object[name].push value
+					else
+						v = []
+						v.push object[name]
+						v.push value
+						object[name] = v
 
 		if object?
 			@objects.push object 
@@ -80,3 +106,11 @@ class Parser
 					if object['left.color']?
 						wall.changeTexture(5, object['left.color'])
 					wall
+			when 'slab'
+				console.log object['point']
+				@built++
+				vertices = []
+				for vertex in object['point']
+					points = vertex.split(',')
+					vertices.push new THREE.Vector3(parseInt(points[0].trim()), parseInt(points[1].trim()), parseInt(points[2].trim()))
+				new Slab(vertices, 40, object['color'])
