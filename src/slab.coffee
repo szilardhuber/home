@@ -2,6 +2,8 @@ class Slab
 
 	geometry: undefined
 	sampleMaterial = undefined
+
+
 	# 
 	constructor: (@vertices, @height, color = undefined) ->
 		texture = new THREE.Texture @generateTexture(color)
@@ -20,25 +22,51 @@ class Slab
 			strokeWidth: 4
 		###
 
+
 	# Input parameter is an array of vertices and the height
 	# We put the points in the vertices of the geometry and we add an additional vertex for each of the originals with the height added to it
 	createGeometry: (polygon, height) ->
-		vertices = []
+		geometry = new THREE.Geometry()
 		for vertex in polygon
-			vertices.push new THREE.Vector3(vertex.x, vertex.z, vertex.y)
-			vertices.push new THREE.Vector3(vertex.x, vertex.z + height, vertex.y)
-		new THREE.ConvexGeometry(vertices)
+			geometry.vertices.push new THREE.Vector3(vertex.x, vertex.z, vertex.y)
+			geometry.vertices.push new THREE.Vector3(vertex.x, vertex.z + height, vertex.y)
+		n = geometry.vertices.length / 2
+		# Sides
+		x = 0
+		while x <= (n - 2) * 2
+			geometry.faces.push new THREE.Face3(x, x + 1, x + 2)
+			geometry.faces.push new THREE.Face3(x + 3, x + 2, x + 1)
+			x += 2
+
+		x = (n - 1) * 2
+		geometry.faces.push new THREE.Face3(x, x + 1, 0)
+		geometry.faces.push new THREE.Face3(1, 0, x + 1)
+
+		# top
+		x = 1
+		while x <= (n - 2)
+			geometry.faces.push new THREE.Face3(((x + 1) * 2) + 1, (x * 2) + 1, 1)
+			x++
+
+		# bottom
+		x = 1
+		while x <= (n - 2)
+			geometry.faces.push new THREE.Face3(0, x * 2, (x + 1) * 2)
+			x++
+
+		geometry.computeBoundingSphere()
+		geometry
+
 
 	# Utility function for creating a material with a given texture.
 	# Used for having different materials for different faces of the mesh and later we only have to change the texture object in the material.
 	getMaterial: (texture) ->
 		if not Slab.sampleMaterial?
-			Slab.sampleMaterial = new THREE.MeshLambertMaterial()
+			Slab.sampleMaterial = new THREE.MeshBasicMaterial()
 		material = Slab.sampleMaterial.clone()
 		material.map = texture
 		material.wrapAroud = true
 		material
-
 
 
    	# Add custom texture to the Slab.
@@ -74,6 +102,7 @@ class Slab
 		# return the canvas
 		canvas
 
+
 	# Change the texture of the given side to the given color.
 	# Sides (looking from start -> end direction from above):
 	#		0 - rear
@@ -88,6 +117,7 @@ class Slab
 		texture.name = "#{side}-#{color}-#{pattern}"
 		@mesh.material.materials[side].map = texture
 		@mesh.material.materials[side].needsUpdate = true
+
 
 	# Returns the length of the Slab. Simple Euclidean distance between start and end.
 	length: () ->
