@@ -85,14 +85,10 @@ class Parser
 					width = parseFloat(object['width'].trim())
 				if startx? and starty? and endx? and endy? and height? and width?
 					wall = new Wall(startx, starty, endx, endy, height, width)
-					if object['rear.color']?
-						wall.changeTexture(0, object['rear.color'])
-					if object['front.color']?
-						wall.changeTexture(1, object['front.color'])
-					if object['top.color']?
-						wall.changeTexture(2, object['top.color'])
 					if object['bottom.color']?
-						wall.changeTexture(3, object['bottom.color'])
+						wall.changeTexture(0, object['bottom.color'])
+					if object['top.color']?
+						wall.changeTexture(1, object['top.color'])
 					if object['right.color']?
 						if startx == 44 and starty == 240 and endx == 990 and endy == 240
 							pattern = []
@@ -100,11 +96,15 @@ class Parser
 							pattern.push new Point(160, 270)
 							pattern.push new Point(260, 270)
 							pattern.push new Point(260, 0)
-							wall.changeTexture(4, object['right.color'], pattern, "#645143")
+							wall.changeTexture(2, object['right.color'], pattern, "#645143")
 						else
-							wall.changeTexture(4, object['right.color'])
+							wall.changeTexture(2, object['right.color'])
+					if object['rear.color']?
+						wall.changeTexture(3, object['rear.color'])
 					if object['left.color']?
-						wall.changeTexture(5, object['left.color'])
+						wall.changeTexture(4, object['left.color'])
+					if object['front.color']?
+						wall.changeTexture(5, object['front.color'])
 					wall
 			when 'slab'
 				console.log object['point']

@@ -6,8 +6,18 @@ class Wall
 	constructor: (@startx, @starty, @endx, @endy, @height, @width) ->
 		texture = new THREE.Texture @generateTexture()
 		texture.needsUpdate = true
-		materials = [ @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture)]
+		materials = 
+			[ 
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+			]
+
 		@mesh = new THREE.Mesh(@createGeometry(@startx, @starty, @endx, @endy, @height, @width), new THREE.MeshFaceMaterial(materials))
+		console.log @mesh.geometry.faces.length
 		@mesh.castShadow = true
 		@mesh.receiveShadow = true
 		rotation = Math.atan( (@endy - @starty) / (@endx - @startx) )
@@ -82,18 +92,22 @@ class Wall
 
 	# Change the texture of the given side to the given color.
 	# Sides (looking from start -> end direction from above):
-	#		0 - rear
-	#		1 - front
-	#		2 - top 
-	#		3 - bottom
-	#		4 - right
-	#		5 - left
+	#		0 - bottom
+	#		1 - top
+	#		2 - right 
+	#		3 - rear
+	#		4 - left
+	#		5 - front
 	changeTexture: (side, color, pattern = undefined, patternColor = undefined) ->
 		texture = new THREE.Texture @generateTexture(color, pattern, patternColor)
 		texture.needsUpdate = true
 		texture.name = "#{side}-#{color}-#{pattern}"
 		@mesh.material.materials[side].map = texture
 		@mesh.material.materials[side].needsUpdate = true
+		@mesh.geometry.faces[side * 2].materialIndex = side
+		@mesh.geometry.faces[(side * 2) + 1].materialIndex = side
+		@mesh.geometry.faceVertexUvs[0][side * 2] = [ new THREE.Vector2(0, 0), new THREE.Vector2(1, 0), new THREE.Vector2(0, 1)]
+		@mesh.geometry.faceVertexUvs[0][(side * 2) + 1] = [ new THREE.Vector2(1, 0), new THREE.Vector2(1, 1), new THREE.Vector2(0, 1)]
 
 	# Returns the length of the wall. Simple Euclidean distance between start and end.
 	length: () ->
