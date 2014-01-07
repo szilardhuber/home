@@ -43,11 +43,11 @@ class Plan
 		hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.9 )
 		hemiLight.color.setHSL( 0.6, 0.75, 0.5 )
 		hemiLight.groundColor.setHSL( 0.095, 0.5, 0.5 )
-		hemiLight.position.set( 0, 500, 0 )
+		hemiLight.position.set( 0, 0, 500 )
 		@scene.add( hemiLight )
 
 		dirLight = new THREE.DirectionalLight( 0xffffff, 1 )
-		dirLight.position.set( -1, 0.75, 1 )
+		dirLight.position.set( -1, -1, 0.75 )
 		dirLight.position.multiplyScalar( 50)
 		dirLight.name = "dirlight"
 		# dirLight.shadowCameraVisible = true
@@ -99,7 +99,6 @@ class Plan
 
 	add: (object) ->
 		object.mesh.name = "block"
-		console.log Wall::geometry.faces.length
 		if not @optimize
 			@scene.add object.mesh
 		else
