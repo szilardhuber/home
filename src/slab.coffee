@@ -27,35 +27,20 @@ class Slab
 	# We put the points in the vertices of the geometry and we add an additional vertex for each of the originals with the height added to it
 	createGeometry: (polygon, height) ->
 		geometry = new THREE.Geometry()
+		shape = new THREE.Shape()
+		first = true
 		for vertex in polygon
-			geometry.vertices.push new THREE.Vector3(vertex.x, vertex.z, vertex.y)
-			geometry.vertices.push new THREE.Vector3(vertex.x, vertex.z + height, vertex.y)
-		n = geometry.vertices.length / 2
-		# Sides
-		x = 0
-		while x <= (n - 2) * 2
-			geometry.faces.push new THREE.Face3(x, x + 1, x + 2)
-			geometry.faces.push new THREE.Face3(x + 3, x + 2, x + 1)
-			x += 2
-
-		x = (n - 1) * 2
-		geometry.faces.push new THREE.Face3(x, x + 1, 0)
-		geometry.faces.push new THREE.Face3(1, 0, x + 1)
-
-		# top
-		x = 1
-		while x <= (n - 2)
-			geometry.faces.push new THREE.Face3(((x + 1) * 2) + 1, (x * 2) + 1, 1)
-			x++
-
-		# bottom
-		x = 1
-		while x <= (n - 2)
-			geometry.faces.push new THREE.Face3(0, x * 2, (x + 1) * 2)
-			x++
-
-		geometry.computeBoundingSphere()
-		geometry
+			if first
+				shape.moveTo vertex.x, vertex.y
+				first = false
+			else
+				shape.lineTo vertex.x, vertex.y
+		shape.lineTo polygon[0].x, polygon[0].y
+		extrudeSettings = { amount: height }
+		extrudeSettings.bevelEnabled = false;
+		# extrudeSettings.bevelSegments = 2;
+		# extrudeSettings.steps = 2;
+		new THREE.ExtrudeGeometry( shape, extrudeSettings );
 
 
 	# Utility function for creating a material with a given texture.

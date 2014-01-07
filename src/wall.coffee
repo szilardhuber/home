@@ -7,21 +7,36 @@ class Wall
 		texture = new THREE.Texture @generateTexture()
 		texture.needsUpdate = true
 		materials = [ @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture)]
-		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), new THREE.MeshFaceMaterial(materials))
+		@mesh = new THREE.Mesh(@createGeometry(@startx, @starty, @endx, @endy, @height, @width), new THREE.MeshFaceMaterial(materials))
 		@mesh.castShadow = true
 		@mesh.receiveShadow = true
-		@mesh.rotation.y = Math.atan( (@endy - @starty) / (@endx - @startx) )
-		endx2 = @endx + @width * Math.sin(@mesh.rotation.y)
-		endy2 = @endy - @width * Math.cos(@mesh.rotation.y)
-		startx2 = @startx + @width * Math.sin(@mesh.rotation.y)
-		starty2 = @starty - @width * Math.cos(@mesh.rotation.y)
-		@mesh.position.x = (endx2 + @startx) / 2
-		@mesh.position.z = -(endy2 + @starty) / 2
+		rotation = Math.atan( (@endy - @starty) / (@endx - @startx) )
+		endx2 = @endx + @width * Math.sin(rotation)
+		endy2 = @endy - @width * Math.cos(rotation)
+		startx2 = @startx + @width * Math.sin(rotation)
+		starty2 = @starty - @width * Math.cos(rotation)
 		@polygon = new Kinetic.Polygon
 			points: [@startx, @starty, @endx, @endy, endx2, endy2, startx2, starty2]
 			fill: 'green'
 			stroke: 'black'
 			strokeWidth: 4
+
+	createGeometry: (startx, starty, endx, endy, height, width) ->
+		shape = new THREE.Shape()
+		rotation = Math.atan( (@endy - @starty) / (@endx - @startx) )
+		endx2 = endx + width * Math.sin(rotation)
+		endy2 = endy - width * Math.cos(rotation)
+		startx2 = startx + width * Math.sin(rotation)
+		starty2 = starty - width * Math.cos(rotation)
+		shape.moveTo startx, starty
+		shape.lineTo endx, endy
+		shape.lineTo endx2, endy2
+		shape.lineTo startx2, starty2
+		shape.lineTo startx, starty
+		extrudeSettings = { amount: height }
+		extrudeSettings.bevelEnabled = false;
+		new THREE.ExtrudeGeometry( shape, extrudeSettings );
+
 
 	# Utility function for creating a material with a given texture.
 	# Used for having different materials for different faces of the mesh and later we only have to change the texture object in the material.

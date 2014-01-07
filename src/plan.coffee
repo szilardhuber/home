@@ -25,7 +25,7 @@ class Plan
 		# the camera starts at 0,0,0
 		# so pull it back
 		@camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR)
-		@camera.position.z = 600
+		@camera.position = new THREE.Vector3(100, -200, 100)
 
 		# initialize controls
 		@controls = new THREE.FirstPersonControls( @camera, @renderer.domElement )
@@ -151,7 +151,7 @@ $ ->
 				if plan.controlsEnabled
 					plan.controlsEnabled = false
 					plan.savedCameraPosition = plan.camera.position
-					plan.camera.position = new THREE.Vector3(400, 600, 500)
+					plan.camera.position = new THREE.Vector3(400, -600, 700)
 					plan.camera.lookAt new THREE.Vector3(400, 0, 0)
 				else
 					plan.controlsEnabled = true
