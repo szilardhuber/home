@@ -185,7 +185,7 @@
       this.renderer.shadowMapType = THREE.PCFShadowMap;
       this.optimize = false;
       this.camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
-      this.camera.position.z = 600;
+      this.camera.position = new THREE.Vector3(100, -200, 100);
       this.controls = new THREE.FirstPersonControls(this.camera, this.renderer.domElement);
       this.controls.movementSpeed = 300;
       this.controls.lookSpeed = 0.25;
@@ -330,7 +330,7 @@
           if (plan.controlsEnabled) {
             plan.controlsEnabled = false;
             plan.savedCameraPosition = plan.camera.position;
-            plan.camera.position = new THREE.Vector3(400, 600, 500);
+            plan.camera.position = new THREE.Vector3(400, -600, 700);
             return plan.camera.lookAt(new THREE.Vector3(400, 0, 0));
           } else {
             plan.controlsEnabled = true;
@@ -395,20 +395,31 @@
     }
 
     Slab.prototype.createGeometry = function(polygon, height) {
-      var vertex, vertices, _i, _len;
-      vertices = [];
+      var extrudeSettings, first, geometry, shape, vertex, _i, _len;
+      geometry = new THREE.Geometry();
+      shape = new THREE.Shape();
+      first = true;
       for (_i = 0, _len = polygon.length; _i < _len; _i++) {
         vertex = polygon[_i];
-        vertices.push(new THREE.Vector3(vertex.x, vertex.z, vertex.y));
-        vertices.push(new THREE.Vector3(vertex.x, vertex.z + height, vertex.y));
+        if (first) {
+          shape.moveTo(vertex.x, vertex.y);
+          first = false;
+        } else {
+          shape.lineTo(vertex.x, vertex.y);
+        }
       }
-      return new THREE.ConvexGeometry(vertices);
+      shape.lineTo(polygon[0].x, polygon[0].y);
+      extrudeSettings = {
+        amount: height
+      };
+      extrudeSettings.bevelEnabled = false;
+      return new THREE.ExtrudeGeometry(shape, extrudeSettings);
     };
 
     Slab.prototype.getMaterial = function(texture) {
       var material;
       if (Slab.sampleMaterial == null) {
-        Slab.sampleMaterial = new THREE.MeshLambertMaterial();
+        Slab.sampleMaterial = new THREE.MeshBasicMaterial();
       }
       material = Slab.sampleMaterial.clone();
       material.map = texture;
@@ -479,7 +490,7 @@
     sampleMaterial = void 0;
 
     function Wall(startx, starty, endx, endy, height, width) {
-      var endx2, endy2, materials, startx2, starty2, texture;
+      var endx2, endy2, materials, rotation, startx2, starty2, texture;
       this.startx = startx;
       this.starty = starty;
       this.endx = endx;
@@ -489,16 +500,14 @@
       texture = new THREE.Texture(this.generateTexture());
       texture.needsUpdate = true;
       materials = [this.getMaterial(texture), this.getMaterial(texture), this.getMaterial(texture), this.getMaterial(texture), this.getMaterial(texture), this.getMaterial(texture)];
-      this.mesh = new THREE.Mesh(new THREE.CubeGeometry(this.length(), this.height, this.width), new THREE.MeshFaceMaterial(materials));
+      this.mesh = new THREE.Mesh(this.createGeometry(this.startx, this.starty, this.endx, this.endy, this.height, this.width), new THREE.MeshFaceMaterial(materials));
       this.mesh.castShadow = true;
       this.mesh.receiveShadow = true;
-      this.mesh.rotation.y = Math.atan((this.endy - this.starty) / (this.endx - this.startx));
-      endx2 = this.endx + this.width * Math.sin(this.mesh.rotation.y);
-      endy2 = this.endy - this.width * Math.cos(this.mesh.rotation.y);
-      startx2 = this.startx + this.width * Math.sin(this.mesh.rotation.y);
-      starty2 = this.starty - this.width * Math.cos(this.mesh.rotation.y);
-      this.mesh.position.x = (endx2 + this.startx) / 2;
-      this.mesh.position.z = -(endy2 + this.starty) / 2;
+      rotation = Math.atan((this.endy - this.starty) / (this.endx - this.startx));
+      endx2 = this.endx + this.width * Math.sin(rotation);
+      endy2 = this.endy - this.width * Math.cos(rotation);
+      startx2 = this.startx + this.width * Math.sin(rotation);
+      starty2 = this.starty - this.width * Math.cos(rotation);
       this.polygon = new Kinetic.Polygon({
         points: [this.startx, this.starty, this.endx, this.endy, endx2, endy2, startx2, starty2],
         fill: 'green',
@@ -506,6 +515,26 @@
         strokeWidth: 4
       });
     }
+
+    Wall.prototype.createGeometry = function(startx, starty, endx, endy, height, width) {
+      var endx2, endy2, extrudeSettings, rotation, shape, startx2, starty2;
+      shape = new THREE.Shape();
+      rotation = Math.atan((this.endy - this.starty) / (this.endx - this.startx));
+      endx2 = endx + width * Math.sin(rotation);
+      endy2 = endy - width * Math.cos(rotation);
+      startx2 = startx + width * Math.sin(rotation);
+      starty2 = starty - width * Math.cos(rotation);
+      shape.moveTo(startx, starty);
+      shape.lineTo(endx, endy);
+      shape.lineTo(endx2, endy2);
+      shape.lineTo(startx2, starty2);
+      shape.lineTo(startx, starty);
+      extrudeSettings = {
+        amount: height
+      };
+      extrudeSettings.bevelEnabled = false;
+      return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    };
 
     Wall.prototype.getMaterial = function(texture) {
       var material;

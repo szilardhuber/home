@@ -142,7 +142,7 @@ class Plan
 		# the camera starts at 0,0,0
 		# so pull it back
 		@camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR)
-		@camera.position.z = 600
+		@camera.position = new THREE.Vector3(100, -200, 100)
 
 		# initialize controls
 		@controls = new THREE.FirstPersonControls( @camera, @renderer.domElement )
@@ -268,7 +268,7 @@ $ ->
 				if plan.controlsEnabled
 					plan.controlsEnabled = false
 					plan.savedCameraPosition = plan.camera.position
-					plan.camera.position = new THREE.Vector3(400, 600, 500)
+					plan.camera.position = new THREE.Vector3(400, -600, 700)
 					plan.camera.lookAt new THREE.Vector3(400, 0, 0)
 				else
 					plan.controlsEnabled = true
@@ -313,6 +313,8 @@ class Slab
 
 	geometry: undefined
 	sampleMaterial = undefined
+
+
 	# 
 	constructor: (@vertices, @height, color = undefined) ->
 		texture = new THREE.Texture @generateTexture(color)
@@ -331,25 +333,36 @@ class Slab
 			strokeWidth: 4
 		###
 
+
 	# Input parameter is an array of vertices and the height
 	# We put the points in the vertices of the geometry and we add an additional vertex for each of the originals with the height added to it
 	createGeometry: (polygon, height) ->
-		vertices = []
+		geometry = new THREE.Geometry()
+		shape = new THREE.Shape()
+		first = true
 		for vertex in polygon
-			vertices.push new THREE.Vector3(vertex.x, vertex.z, vertex.y)
-			vertices.push new THREE.Vector3(vertex.x, vertex.z + height, vertex.y)
-		new THREE.ConvexGeometry(vertices)
+			if first
+				shape.moveTo vertex.x, vertex.y
+				first = false
+			else
+				shape.lineTo vertex.x, vertex.y
+		shape.lineTo polygon[0].x, polygon[0].y
+		extrudeSettings = { amount: height }
+		extrudeSettings.bevelEnabled = false;
+		# extrudeSettings.bevelSegments = 2;
+		# extrudeSettings.steps = 2;
+		new THREE.ExtrudeGeometry( shape, extrudeSettings );
+
 
 	# Utility function for creating a material with a given texture.
 	# Used for having different materials for different faces of the mesh and later we only have to change the texture object in the material.
 	getMaterial: (texture) ->
 		if not Slab.sampleMaterial?
-			Slab.sampleMaterial = new THREE.MeshLambertMaterial()
+			Slab.sampleMaterial = new THREE.MeshBasicMaterial()
 		material = Slab.sampleMaterial.clone()
 		material.map = texture
 		material.wrapAroud = true
 		material
-
 
 
    	# Add custom texture to the Slab.
@@ -385,6 +398,7 @@ class Slab
 		# return the canvas
 		canvas
 
+
 	# Change the texture of the given side to the given color.
 	# Sides (looking from start -> end direction from above):
 	#		0 - rear
@@ -400,6 +414,7 @@ class Slab
 		@mesh.material.materials[side].map = texture
 		@mesh.material.materials[side].needsUpdate = true
 
+
 	# Returns the length of the Slab. Simple Euclidean distance between start and end.
 	length: () ->
 		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 
@@ -414,21 +429,36 @@ class Wall
 		texture = new THREE.Texture @generateTexture()
 		texture.needsUpdate = true
 		materials = [ @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture)]
-		@mesh = new THREE.Mesh(new THREE.CubeGeometry(@length(), @height, @width), new THREE.MeshFaceMaterial(materials))
+		@mesh = new THREE.Mesh(@createGeometry(@startx, @starty, @endx, @endy, @height, @width), new THREE.MeshFaceMaterial(materials))
 		@mesh.castShadow = true
 		@mesh.receiveShadow = true
-		@mesh.rotation.y = Math.atan( (@endy - @starty) / (@endx - @startx) )
-		endx2 = @endx + @width * Math.sin(@mesh.rotation.y)
-		endy2 = @endy - @width * Math.cos(@mesh.rotation.y)
-		startx2 = @startx + @width * Math.sin(@mesh.rotation.y)
-		starty2 = @starty - @width * Math.cos(@mesh.rotation.y)
-		@mesh.position.x = (endx2 + @startx) / 2
-		@mesh.position.z = -(endy2 + @starty) / 2
+		rotation = Math.atan( (@endy - @starty) / (@endx - @startx) )
+		endx2 = @endx + @width * Math.sin(rotation)
+		endy2 = @endy - @width * Math.cos(rotation)
+		startx2 = @startx + @width * Math.sin(rotation)
+		starty2 = @starty - @width * Math.cos(rotation)
 		@polygon = new Kinetic.Polygon
 			points: [@startx, @starty, @endx, @endy, endx2, endy2, startx2, starty2]
 			fill: 'green'
 			stroke: 'black'
 			strokeWidth: 4
+
+	createGeometry: (startx, starty, endx, endy, height, width) ->
+		shape = new THREE.Shape()
+		rotation = Math.atan( (@endy - @starty) / (@endx - @startx) )
+		endx2 = endx + width * Math.sin(rotation)
+		endy2 = endy - width * Math.cos(rotation)
+		startx2 = startx + width * Math.sin(rotation)
+		starty2 = starty - width * Math.cos(rotation)
+		shape.moveTo startx, starty
+		shape.lineTo endx, endy
+		shape.lineTo endx2, endy2
+		shape.lineTo startx2, starty2
+		shape.lineTo startx, starty
+		extrudeSettings = { amount: height }
+		extrudeSettings.bevelEnabled = false;
+		new THREE.ExtrudeGeometry( shape, extrudeSettings );
+
 
 	# Utility function for creating a material with a given texture.
 	# Used for having different materials for different faces of the mesh and later we only have to change the texture object in the material.
