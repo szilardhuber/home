@@ -265,8 +265,8 @@ THREE.FirstPersonControls = function ( object, domElement ) {
 		targetPosition.z = position.z + 100 * Math.cos( this.phi );
 		targetPosition.y = position.y + 100 * Math.sin( this.phi ) * Math.sin( this.theta );
 
-		console.log('Position: ' + position.x + ', ' + position.y + ', ' + position.z);
-		console.log(targetPosition);
+		//console.log('Position: ' + position.x + ', ' + position.y + ', ' + position.z);
+		//console.log(targetPosition);
 
 		this.object.lookAt( targetPosition );
 

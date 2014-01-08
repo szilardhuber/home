@@ -1,6 +1,94 @@
 (function() {
-  var Parser, Plan, Point, Slab, Wall,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var BuildingObject, Parser, Plan, Point, Slab, Wall,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+  BuildingObject = (function() {
+    var geometry, sampleMaterial;
+
+    function BuildingObject() {}
+
+    sampleMaterial = void 0;
+
+    geometry = void 0;
+
+    BuildingObject.prototype.generateTexture = function(color, pattern, patternColor) {
+      var canvas, context, point, _i, _len, _ref;
+      if (color == null) {
+        color = "#cccccc";
+      }
+      if (pattern == null) {
+        pattern = void 0;
+      }
+      if (patternColor == null) {
+        patternColor = void 0;
+      }
+      canvas = document.createElement("canvas");
+      canvas.width = this.getLength();
+      canvas.height = this.getHeight();
+      context = canvas.getContext("2d");
+      context.fillStyle = color;
+      context.fillRect(0, 0, this.getLength(), this.getHeight());
+      if (pattern != null) {
+        context.fillStyle = patternColor;
+        context.beginPath();
+        context.moveTo(pattern[0].x, pattern[0].y);
+        _ref = pattern.slice(1);
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          point = _ref[_i];
+          context.lineTo(point.x, point.y);
+        }
+        context.closePath();
+        context.fill();
+      }
+      return canvas;
+    };
+
+    BuildingObject.prototype.getMaterial = function(texture) {
+      var material;
+      if (BuildingObject.sampleMaterial == null) {
+        BuildingObject.sampleMaterial = new THREE.MeshLambertMaterial();
+      }
+      material = BuildingObject.sampleMaterial.clone();
+      material.map = texture;
+      material.wrapAroud = true;
+      return material;
+    };
+
+    BuildingObject.prototype.changeTexture = function(side, color, pattern, patternColor) {
+      var texture;
+      if (pattern == null) {
+        pattern = void 0;
+      }
+      if (patternColor == null) {
+        patternColor = void 0;
+      }
+      texture = new THREE.Texture(this.generateTexture(color, pattern, patternColor));
+      texture.needsUpdate = true;
+      texture.name = "" + side + "-" + color + "-" + pattern;
+      this.mesh.material.materials[side].map = texture;
+      this.mesh.material.materials[side].needsUpdate = true;
+      this.mesh.geometry.faces[side * 2].materialIndex = side;
+      this.mesh.geometry.faces[(side * 2) + 1].materialIndex = side;
+      if (pattern != null) {
+        return this.updateUVs(side);
+      }
+    };
+
+    BuildingObject.prototype.updateUVs = function(side) {
+      if (side === 0 || side === 1) {
+        this.mesh.geometry.faceVertexUvs[0][side * 2] = [new THREE.Vector2(0, 0), new THREE.Vector2(1, 0), new THREE.Vector2(1, 1)];
+        return this.mesh.geometry.faceVertexUvs[0][(side * 2) + 1] = [new THREE.Vector2(1, 1), new THREE.Vector2(0, 1), new THREE.Vector2(0, 0)];
+      } else {
+        this.mesh.geometry.faceVertexUvs[0][side * 2] = [new THREE.Vector2(0, 0), new THREE.Vector2(1, 0), new THREE.Vector2(0, 1)];
+        return this.mesh.geometry.faceVertexUvs[0][(side * 2) + 1] = [new THREE.Vector2(1, 0), new THREE.Vector2(1, 1), new THREE.Vector2(0, 1)];
+      }
+    };
+
+    return BuildingObject;
+
+  })();
 
   Point = (function() {
     function Point(x, y) {
@@ -88,7 +176,7 @@
     };
 
     Parser.prototype.get = function() {
-      var coords, endx, endy, height, object, pattern, points, startx, starty, vertex, vertices, wall, width, _i, _len, _ref;
+      var coords, endx, endy, height, object, pattern, points, slab, startx, starty, vertex, vertices, wall, width, _i, _len, _ref;
       object = this.objects[this.built];
       switch (object['type']) {
         case 'wall':
@@ -111,17 +199,11 @@
           }
           if ((startx != null) && (starty != null) && (endx != null) && (endy != null) && (height != null) && (width != null)) {
             wall = new Wall(startx, starty, endx, endy, height, width);
-            if (object['rear.color'] != null) {
-              wall.changeTexture(0, object['rear.color']);
-            }
-            if (object['front.color'] != null) {
-              wall.changeTexture(1, object['front.color']);
+            if (object['bottom.color'] != null) {
+              wall.changeTexture(0, object['bottom.color']);
             }
             if (object['top.color'] != null) {
-              wall.changeTexture(2, object['top.color']);
-            }
-            if (object['bottom.color'] != null) {
-              wall.changeTexture(3, object['bottom.color']);
+              wall.changeTexture(1, object['top.color']);
             }
             if (object['right.color'] != null) {
               if (startx === 44 && starty === 240 && endx === 990 && endy === 240) {
@@ -130,13 +212,19 @@
                 pattern.push(new Point(160, 270));
                 pattern.push(new Point(260, 270));
                 pattern.push(new Point(260, 0));
-                wall.changeTexture(4, object['right.color'], pattern, "#645143");
+                wall.changeTexture(2, object['right.color'], pattern, "#645143");
               } else {
-                wall.changeTexture(4, object['right.color']);
+                wall.changeTexture(2, object['right.color']);
               }
             }
+            if (object['rear.color'] != null) {
+              wall.changeTexture(3, object['rear.color']);
+            }
             if (object['left.color'] != null) {
-              wall.changeTexture(5, object['left.color']);
+              wall.changeTexture(4, object['left.color']);
+            }
+            if (object['front.color'] != null) {
+              wall.changeTexture(5, object['front.color']);
             }
             return wall;
           }
@@ -151,7 +239,31 @@
             points = vertex.split(',');
             vertices.push(new THREE.Vector3(parseInt(points[0].trim()), parseInt(points[1].trim()), parseInt(points[2].trim())));
           }
-          return new Slab(vertices, 40, object['color']);
+          slab = new Slab(vertices, 40, object['color']);
+          if (object['bottom.color'] != null) {
+            slab.changeTexture(0, object['bottom.color']);
+          }
+          if (object['top.color'] != null) {
+            pattern = [];
+            pattern.push(new Point(0, 20));
+            pattern.push(new Point(0, 100));
+            pattern.push(new Point(100, 100));
+            pattern.push(new Point(100, 60));
+            slab.changeTexture(1, object['top.color'], pattern, "#645143");
+          }
+          if (object['right.color'] != null) {
+            slab.changeTexture(2, object['right.color']);
+          }
+          if (object['rear.color'] != null) {
+            slab.changeTexture(3, object['rear.color']);
+          }
+          if (object['left.color'] != null) {
+            slab.changeTexture(4, object['left.color']);
+          }
+          if (object['front.color'] != null) {
+            slab.changeTexture(5, object['front.color']);
+          }
+          return slab;
       }
     };
 
@@ -197,10 +309,10 @@
       hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.9);
       hemiLight.color.setHSL(0.6, 0.75, 0.5);
       hemiLight.groundColor.setHSL(0.095, 0.5, 0.5);
-      hemiLight.position.set(0, 500, 0);
+      hemiLight.position.set(0, 0, 500);
       this.scene.add(hemiLight);
       dirLight = new THREE.DirectionalLight(0xffffff, 1);
-      dirLight.position.set(-1, 0.75, 1);
+      dirLight.position.set(-1, -1, 0.75);
       dirLight.position.multiplyScalar(50);
       dirLight.name = "dirlight";
       this.scene.add(dirLight);
@@ -259,7 +371,6 @@
     Plan.prototype.add = function(object) {
       var face, i, _i, _len, _ref;
       object.mesh.name = "block";
-      console.log(Wall.prototype.geometry.faces.length);
       if (!this.optimize) {
         this.scene.add(object.mesh);
       } else {
@@ -363,15 +474,11 @@
     return plan.draw();
   });
 
-  Slab = (function() {
-    var sampleMaterial;
-
-    Slab.prototype.geometry = void 0;
-
-    sampleMaterial = void 0;
+  Slab = (function(_super) {
+    __extends(Slab, _super);
 
     function Slab(vertices, height, color) {
-      var material, texture;
+      var materials, texture;
       this.vertices = vertices;
       this.height = height;
       if (color == null) {
@@ -379,8 +486,8 @@
       }
       texture = new THREE.Texture(this.generateTexture(color));
       texture.needsUpdate = true;
-      material = this.getMaterial(texture);
-      this.mesh = new THREE.Mesh(new this.createGeometry(this.vertices, this.height), material);
+      materials = [this.getMaterial(texture), this.getMaterial(texture), this.getMaterial(texture), this.getMaterial(texture), this.getMaterial(texture), this.getMaterial(texture)];
+      this.mesh = new THREE.Mesh(new this.createGeometry(this.vertices, this.height), new THREE.MeshFaceMaterial(materials));
       this.mesh.castShadow = true;
       this.mesh.receiveShadow = true;
       /*
@@ -416,78 +523,20 @@
       return new THREE.ExtrudeGeometry(shape, extrudeSettings);
     };
 
-    Slab.prototype.getMaterial = function(texture) {
-      var material;
-      if (Slab.sampleMaterial == null) {
-        Slab.sampleMaterial = new THREE.MeshBasicMaterial();
-      }
-      material = Slab.sampleMaterial.clone();
-      material.map = texture;
-      material.wrapAroud = true;
-      return material;
+    Slab.prototype.getLength = function() {
+      return 100;
     };
 
-    Slab.prototype.generateTexture = function(color, pattern, patternColor) {
-      var canvas, context, point, _i, _len, _ref;
-      if (pattern == null) {
-        pattern = void 0;
-      }
-      if (patternColor == null) {
-        patternColor = void 0;
-      }
-      if (color == null) {
-        color = '#FFFFFF';
-      }
-      canvas = document.createElement("canvas");
-      canvas.width = 100;
-      canvas.height = 100;
-      context = canvas.getContext("2d");
-      context.fillStyle = color;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      if (pattern != null) {
-        context.fillStyle = patternColor;
-        context.beginPath();
-        context.moveTo(pattern[0].x, pattern[0].y);
-        _ref = pattern.slice(1);
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          point = _ref[_i];
-          context.lineTo(point.x, point.y);
-        }
-        context.closePath();
-        context.fill();
-      }
-      return canvas;
-    };
-
-    Slab.prototype.changeTexture = function(side, color, pattern, patternColor) {
-      var texture;
-      if (pattern == null) {
-        pattern = void 0;
-      }
-      if (patternColor == null) {
-        patternColor = void 0;
-      }
-      texture = new THREE.Texture(this.generateTexture(color, pattern, patternColor));
-      texture.needsUpdate = true;
-      texture.name = "" + side + "-" + color + "-" + pattern;
-      this.mesh.material.materials[side].map = texture;
-      return this.mesh.material.materials[side].needsUpdate = true;
-    };
-
-    Slab.prototype.length = function() {
-      return Math.sqrt(Math.pow(this.startx - this.endx, 2) + Math.pow(this.starty - this.endy, 2));
+    Slab.prototype.getHeight = function() {
+      return 100;
     };
 
     return Slab;
 
-  })();
+  })(BuildingObject);
 
-  Wall = (function() {
-    var sampleMaterial;
-
-    Wall.prototype.geometry = void 0;
-
-    sampleMaterial = void 0;
+  Wall = (function(_super) {
+    __extends(Wall, _super);
 
     function Wall(startx, starty, endx, endy, height, width) {
       var endx2, endy2, materials, rotation, startx2, starty2, texture;
@@ -536,71 +585,17 @@
       return new THREE.ExtrudeGeometry(shape, extrudeSettings);
     };
 
-    Wall.prototype.getMaterial = function(texture) {
-      var material;
-      if (Wall.sampleMaterial == null) {
-        Wall.sampleMaterial = new THREE.MeshLambertMaterial();
-      }
-      material = Wall.sampleMaterial.clone();
-      material.map = texture;
-      material.wrapAroud = true;
-      return material;
-    };
-
-    Wall.prototype.generateTexture = function(color, pattern, patternColor) {
-      var canvas, context, point, _i, _len, _ref;
-      if (color == null) {
-        color = "#cccccc";
-      }
-      if (pattern == null) {
-        pattern = void 0;
-      }
-      if (patternColor == null) {
-        patternColor = void 0;
-      }
-      canvas = document.createElement("canvas");
-      canvas.width = this.length();
-      canvas.height = this.height;
-      context = canvas.getContext("2d");
-      context.fillStyle = color;
-      context.fillRect(0, 0, this.length(), this.height);
-      if (pattern != null) {
-        context.fillStyle = patternColor;
-        context.beginPath();
-        context.moveTo(pattern[0].x, pattern[0].y);
-        _ref = pattern.slice(1);
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          point = _ref[_i];
-          context.lineTo(point.x, point.y);
-        }
-        context.closePath();
-        context.fill();
-      }
-      return canvas;
-    };
-
-    Wall.prototype.changeTexture = function(side, color, pattern, patternColor) {
-      var texture;
-      if (pattern == null) {
-        pattern = void 0;
-      }
-      if (patternColor == null) {
-        patternColor = void 0;
-      }
-      texture = new THREE.Texture(this.generateTexture(color, pattern, patternColor));
-      texture.needsUpdate = true;
-      texture.name = "" + side + "-" + color + "-" + pattern;
-      this.mesh.material.materials[side].map = texture;
-      return this.mesh.material.materials[side].needsUpdate = true;
-    };
-
-    Wall.prototype.length = function() {
+    Wall.prototype.getLength = function() {
       return Math.sqrt(Math.pow(this.startx - this.endx, 2) + Math.pow(this.starty - this.endy, 2));
+    };
+
+    Wall.prototype.getHeight = function() {
+      return this.height;
     };
 
     return Wall;
 
-  })();
+  })(BuildingObject);
 
 }).call(this);
 

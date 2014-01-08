@@ -1,3 +1,75 @@
+class BuildingObject
+	sampleMaterial = undefined
+	geometry = undefined
+
+   	# Add custom texture to the wall.
+   	# Currently we only support adding a background color and a rect with a color above it.
+   	# This is enough for the current needs but as this method uses a canvas later it could
+   	# be extended to arbitrary complexity.
+	generateTexture: (color = "#cccccc", pattern = undefined, patternColor = undefined) ->
+		# create the canvas that we will draw to and set the size to the size of the wall
+		canvas = document.createElement("canvas")
+		canvas.width = @getLength()
+		canvas.height = @getHeight()
+
+		# get context
+		context = canvas.getContext("2d")
+
+		# draw the background with the given color. 
+		# we draw it full sized on the canvas
+		context.fillStyle = color
+		context.fillRect 0, 0, @getLength(), @getHeight()
+
+		# draw foreground rect - TODO I need more than one patterns
+		if pattern?
+			context.fillStyle = patternColor
+			context.beginPath()
+			context.moveTo pattern[0].x, pattern[0].y
+			for point in pattern[1..]
+				context.lineTo point.x , point.y
+			context.closePath()
+			context.fill()
+
+		# return the canvas
+		canvas
+
+	# Utility function for creating a material with a given texture.
+	# Used for having different materials for different faces of the mesh and later we only have to change the texture object in the material.
+	getMaterial: (texture) ->
+		if not BuildingObject.sampleMaterial?
+			BuildingObject.sampleMaterial = new THREE.MeshLambertMaterial()
+		material = BuildingObject.sampleMaterial.clone()
+		material.map = texture
+		material.wrapAroud = true
+		material
+
+	# Change the texture of the given side to the given color.
+	# Sides (looking from start -> end direction from above):
+	#		0 - bottom
+	#		1 - top
+	#		2 - right 
+	#		3 - rear
+	#		4 - left
+	#		5 - front
+	changeTexture: (side, color, pattern = undefined, patternColor = undefined) ->
+		texture = new THREE.Texture @generateTexture(color, pattern, patternColor)
+		texture.needsUpdate = true
+		texture.name = "#{side}-#{color}-#{pattern}"
+		@mesh.material.materials[side].map = texture
+		@mesh.material.materials[side].needsUpdate = true
+		@mesh.geometry.faces[side * 2].materialIndex = side
+		@mesh.geometry.faces[(side * 2) + 1].materialIndex = side
+		if pattern?
+			@updateUVs(side)
+
+	updateUVs: (side) ->
+		if side == 0 or side == 1
+			@mesh.geometry.faceVertexUvs[0][side * 2] = [ new THREE.Vector2(0, 0), new THREE.Vector2(1, 0), new THREE.Vector2(1, 1)]
+			@mesh.geometry.faceVertexUvs[0][(side * 2) + 1] = [ new THREE.Vector2(1, 1), new THREE.Vector2(0, 1), new THREE.Vector2(0, 0)]
+		else
+			@mesh.geometry.faceVertexUvs[0][side * 2] = [ new THREE.Vector2(0, 0), new THREE.Vector2(1, 0), new THREE.Vector2(0, 1)]
+			@mesh.geometry.faceVertexUvs[0][(side * 2) + 1] = [ new THREE.Vector2(1, 0), new THREE.Vector2(1, 1), new THREE.Vector2(0, 1)]
+
 class Point
 	constructor: (@x, @y) ->
 
@@ -85,14 +157,10 @@ class Parser
 					width = parseFloat(object['width'].trim())
 				if startx? and starty? and endx? and endy? and height? and width?
 					wall = new Wall(startx, starty, endx, endy, height, width)
-					if object['rear.color']?
-						wall.changeTexture(0, object['rear.color'])
-					if object['front.color']?
-						wall.changeTexture(1, object['front.color'])
-					if object['top.color']?
-						wall.changeTexture(2, object['top.color'])
 					if object['bottom.color']?
-						wall.changeTexture(3, object['bottom.color'])
+						wall.changeTexture(0, object['bottom.color'])
+					if object['top.color']?
+						wall.changeTexture(1, object['top.color'])
 					if object['right.color']?
 						if startx == 44 and starty == 240 and endx == 990 and endy == 240
 							pattern = []
@@ -100,11 +168,15 @@ class Parser
 							pattern.push new Point(160, 270)
 							pattern.push new Point(260, 270)
 							pattern.push new Point(260, 0)
-							wall.changeTexture(4, object['right.color'], pattern, "#645143")
+							wall.changeTexture(2, object['right.color'], pattern, "#645143")
 						else
-							wall.changeTexture(4, object['right.color'])
+							wall.changeTexture(2, object['right.color'])
+					if object['rear.color']?
+						wall.changeTexture(3, object['rear.color'])
 					if object['left.color']?
-						wall.changeTexture(5, object['left.color'])
+						wall.changeTexture(4, object['left.color'])
+					if object['front.color']?
+						wall.changeTexture(5, object['front.color'])
 					wall
 			when 'slab'
 				console.log object['point']
@@ -113,7 +185,26 @@ class Parser
 				for vertex in object['point']
 					points = vertex.split(',')
 					vertices.push new THREE.Vector3(parseInt(points[0].trim()), parseInt(points[1].trim()), parseInt(points[2].trim()))
-				new Slab(vertices, 40, object['color'])
+				slab = new Slab(vertices, 40, object['color'])
+				if object['bottom.color']?
+					slab.changeTexture(0, object['bottom.color'])
+				if object['top.color']?
+					pattern = []
+					pattern.push new Point(0, 20)
+					pattern.push new Point(0, 100)
+					pattern.push new Point(100, 100)
+					pattern.push new Point(100, 60)
+					slab.changeTexture(1, object['top.color'], pattern, "#645143")
+				if object['right.color']?
+					slab.changeTexture(2, object['right.color'])
+				if object['rear.color']?
+					slab.changeTexture(3, object['rear.color'])
+				if object['left.color']?
+					slab.changeTexture(4, object['left.color'])
+				if object['front.color']?
+					slab.changeTexture(5, object['front.color'])
+				slab
+
 
 class Plan
 	# set the scene size
@@ -160,11 +251,11 @@ class Plan
 		hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.9 )
 		hemiLight.color.setHSL( 0.6, 0.75, 0.5 )
 		hemiLight.groundColor.setHSL( 0.095, 0.5, 0.5 )
-		hemiLight.position.set( 0, 500, 0 )
+		hemiLight.position.set( 0, 0, 500 )
 		@scene.add( hemiLight )
 
 		dirLight = new THREE.DirectionalLight( 0xffffff, 1 )
-		dirLight.position.set( -1, 0.75, 1 )
+		dirLight.position.set( -1, -1, 0.75 )
 		dirLight.position.multiplyScalar( 50)
 		dirLight.name = "dirlight"
 		# dirLight.shadowCameraVisible = true
@@ -216,7 +307,6 @@ class Plan
 
 	add: (object) ->
 		object.mesh.name = "block"
-		console.log Wall::geometry.faces.length
 		if not @optimize
 			@scene.add object.mesh
 		else
@@ -309,19 +399,24 @@ $ ->
 	plan.draw()
 
 
-class Slab
-
-	geometry: undefined
-	sampleMaterial = undefined
+class Slab extends BuildingObject
 
 
 	# 
 	constructor: (@vertices, @height, color = undefined) ->
 		texture = new THREE.Texture @generateTexture(color)
 		texture.needsUpdate = true
-		material = @getMaterial(texture)
+		materials = 
+			[ 
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+			]
 
-		@mesh = new THREE.Mesh(new @createGeometry(@vertices, @height), material)
+		@mesh = new THREE.Mesh(new @createGeometry(@vertices, @height), new THREE.MeshFaceMaterial(materials))
 		@mesh.castShadow = true
 		@mesh.receiveShadow = true
 		###
@@ -353,82 +448,27 @@ class Slab
 		# extrudeSettings.steps = 2;
 		new THREE.ExtrudeGeometry( shape, extrudeSettings );
 
+	getLength: () ->
+		100
 
-	# Utility function for creating a material with a given texture.
-	# Used for having different materials for different faces of the mesh and later we only have to change the texture object in the material.
-	getMaterial: (texture) ->
-		if not Slab.sampleMaterial?
-			Slab.sampleMaterial = new THREE.MeshBasicMaterial()
-		material = Slab.sampleMaterial.clone()
-		material.map = texture
-		material.wrapAroud = true
-		material
+	getHeight: () ->
+		100
+class Wall extends BuildingObject
 
-
-   	# Add custom texture to the Slab.
-   	# Currently we only support adding a background color and a rect with a color above it.
-   	# This is enough for the current needs but as this method uses a canvas later it could
-   	# be extended to arbitrary complexity.
-	generateTexture: (color, pattern = undefined, patternColor = undefined) ->
-		if not color?
-			color = '#FFFFFF'
-		# create the canvas that we will draw to and set the size to the size of the wall
-		canvas = document.createElement("canvas")
-		canvas.width = 100
-		canvas.height = 100
-
-		# get context
-		context = canvas.getContext("2d")
-
-		# draw the background with the given color. 
-		# we draw it full sized on the canvas
-		context.fillStyle = color
-		context.fillRect 0, 0, canvas.width, canvas.height
-
-		# draw foreground rect - TODO I need more than one patterns
-		if pattern?
-			context.fillStyle = patternColor
-			context.beginPath()
-			context.moveTo pattern[0].x, pattern[0].y
-			for point in pattern[1..]
-				context.lineTo point.x , point.y
-			context.closePath()
-			context.fill()
-
-		# return the canvas
-		canvas
-
-
-	# Change the texture of the given side to the given color.
-	# Sides (looking from start -> end direction from above):
-	#		0 - rear
-	#		1 - front
-	#		2 - top 
-	#		3 - bottom
-	#		4 - right
-	#		5 - left
-	changeTexture: (side, color, pattern = undefined, patternColor = undefined) ->
-		texture = new THREE.Texture @generateTexture(color, pattern, patternColor)
-		texture.needsUpdate = true
-		texture.name = "#{side}-#{color}-#{pattern}"
-		@mesh.material.materials[side].map = texture
-		@mesh.material.materials[side].needsUpdate = true
-
-
-	# Returns the length of the Slab. Simple Euclidean distance between start and end.
-	length: () ->
-		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 
-
-
-class Wall
-
-	geometry: undefined
-	sampleMaterial = undefined
 	# 
 	constructor: (@startx, @starty, @endx, @endy, @height, @width) ->
 		texture = new THREE.Texture @generateTexture()
 		texture.needsUpdate = true
-		materials = [ @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture), @getMaterial(texture)]
+		materials = 
+			[ 
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+				@getMaterial(texture)
+			]
+
 		@mesh = new THREE.Mesh(@createGeometry(@startx, @starty, @endx, @endy, @height, @width), new THREE.MeshFaceMaterial(materials))
 		@mesh.castShadow = true
 		@mesh.receiveShadow = true
@@ -460,64 +500,9 @@ class Wall
 		new THREE.ExtrudeGeometry( shape, extrudeSettings );
 
 
-	# Utility function for creating a material with a given texture.
-	# Used for having different materials for different faces of the mesh and later we only have to change the texture object in the material.
-	getMaterial: (texture) ->
-		if not Wall.sampleMaterial?
-			Wall.sampleMaterial = new THREE.MeshLambertMaterial()
-		material = Wall.sampleMaterial.clone()
-		material.map = texture
-		material.wrapAroud = true
-		material
-
-
-   	# Add custom texture to the wall.
-   	# Currently we only support adding a background color and a rect with a color above it.
-   	# This is enough for the current needs but as this method uses a canvas later it could
-   	# be extended to arbitrary complexity.
-	generateTexture: (color = "#cccccc", pattern = undefined, patternColor = undefined) ->
-		# create the canvas that we will draw to and set the size to the size of the wall
-		canvas = document.createElement("canvas")
-		canvas.width = @length()
-		canvas.height = @height
-
-		# get context
-		context = canvas.getContext("2d")
-
-		# draw the background with the given color. 
-		# we draw it full sized on the canvas
-		context.fillStyle = color
-		context.fillRect 0, 0, @length(), @height
-
-		# draw foreground rect - TODO I need more than one patterns
-		if pattern?
-			context.fillStyle = patternColor
-			context.beginPath()
-			context.moveTo pattern[0].x, pattern[0].y
-			for point in pattern[1..]
-				context.lineTo point.x , point.y
-			context.closePath()
-			context.fill()
-
-		# return the canvas
-		canvas
-
-	# Change the texture of the given side to the given color.
-	# Sides (looking from start -> end direction from above):
-	#		0 - rear
-	#		1 - front
-	#		2 - top 
-	#		3 - bottom
-	#		4 - right
-	#		5 - left
-	changeTexture: (side, color, pattern = undefined, patternColor = undefined) ->
-		texture = new THREE.Texture @generateTexture(color, pattern, patternColor)
-		texture.needsUpdate = true
-		texture.name = "#{side}-#{color}-#{pattern}"
-		@mesh.material.materials[side].map = texture
-		@mesh.material.materials[side].needsUpdate = true
-
 	# Returns the length of the wall. Simple Euclidean distance between start and end.
-	length: () ->
+	getLength: () ->
 		Math.sqrt( Math.pow(@startx - @endx, 2) + Math.pow(@starty - @endy, 2) ) 
 
+	getHeight: () ->
+		@height
