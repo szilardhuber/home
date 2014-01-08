@@ -113,4 +113,23 @@ class Parser
 				for vertex in object['point']
 					points = vertex.split(',')
 					vertices.push new THREE.Vector3(parseInt(points[0].trim()), parseInt(points[1].trim()), parseInt(points[2].trim()))
-				new Slab(vertices, 40, object['color'])
+				slab = new Slab(vertices, 40, object['color'])
+				if object['bottom.color']?
+					slab.changeTexture(0, object['bottom.color'])
+				if object['top.color']?
+					pattern = []
+					pattern.push new Point(0, 20)
+					pattern.push new Point(0, 100)
+					pattern.push new Point(100, 100)
+					pattern.push new Point(100, 60)
+					slab.changeTexture(1, object['top.color'], pattern, "#645143")
+				if object['right.color']?
+					slab.changeTexture(2, object['right.color'])
+				if object['rear.color']?
+					slab.changeTexture(3, object['rear.color'])
+				if object['left.color']?
+					slab.changeTexture(4, object['left.color'])
+				if object['front.color']?
+					slab.changeTexture(5, object['front.color'])
+				slab
+
