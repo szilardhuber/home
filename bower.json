@@ -19,6 +19,7 @@
     "jquery": "~2.0.3"
   },
   "devDependencies": {
-    "kineticjs": "~4.7.3"
+    "kineticjs": "~4.7.3",
+    "bootstrap": "~3.0.3"
   }
 }

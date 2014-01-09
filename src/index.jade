@@ -7,142 +7,131 @@ html
 		script(src="libs/jquery.min.js")
 		script(src="libs/three.min.js")
 		script(src="libs/kinetic-v4.7.3.min.js")
+		script(src="libs/bootstrap.min.js")
+		script(src="libs/tab.js")
 		script(src="FirstPersonControls.js")
 		script(src="FlyControls.js")
 		script(src="ConvexGeometry.js")
 		script(src="index.js")
-		script#vertex_shader(type="x-shader/x-vertex").
-			varying vec2 vUv;
-			varying vec3 vNormal;
-			varying vec3 vViewPosition;
-			void main() {
-				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-				vUv = uv;
-				vNormal = normalize( normalMatrix * normal );
-				vViewPosition = -mvPosition.xyz;
-				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-			}
-		script#fragment_shader(type="x-shader/x-fragment").
-			uniform sampler2D texture;
-			uniform sampler2D texture2;
-			varying vec2 vUv;
-			varying vec3 vNormal;
-			varying vec3 vViewPosition;
-			void main() {
-				vec4 tColor = texture2D( texture, vUv );
-				gl_FragColor = tColor;
-			}
-
+		link(rel="stylesheet", type="text/css", href="libs/bootstrap.min.css")
+		link(rel="stylesheet", type="text/css", href="libs/bootstrap-theme.min.css")
 
 	body
-		table
-			tr
-				td 2d
-				td 3d
-				td Plan
-				td test
-			tr
-				td(style="border:5px solid red;")
-					span#floorplan
-				td
-					div#container
-				td
-					span
-						textarea#text(rows=22, cols=50)
-							| # OUTER WALLS
-							| 	## height: 270
-							| 	## width: 44
-							| 	## right.color: #B1E74C
-							| 	## top.color: #C79478
-							| 	## bottom.color: #C79478
-							| 	## left.color: #C79478
-							| 	## start.z: 0
-							| 	## end.z: 0
-							| 	Wall
-							| 		start: 0, -540
-							| 		end: 0, 240
-							| 	Wall
-							| 		start: 44, 240
-							| 		end: 990, 240
-							| 	Wall
-							| 		start: 990, -540
-							| 		end: 990, 240
-							| 	Wall
-							| 		start: 44, -496
-							| 		end: 990, -496
-							| 
-							| # BATHROOM WALLS
-							| 	## height: 270
-							| 	## width: 10
-							| 	## right.color: #B1E74C
-							| 	## start.z: 0
-							| 	## end.z: 0
-							| 	Wall
-							| 		start: 324, 196
-							| 		end: 324, -91
-							| 	Wall
-							| 		start: 44, -73
-							| 		end: 144, -73
-							| 	Wall
-							| 		start: 208, -73
-							| 		end: 314, -73
-							| # BATHROOM SLAB
-							|	## height: 10
-							|	## color: #B1E74C 
-							|	Slab
-							|		- point: 44, -73, -175
-							|		- point: 44, 196, -175
-							|		- point: 314, 196, -175
-							|		- point: 314, -73, -175
-							|
-							| # BEDROOM
-							| 	## right.color: #CCCCCC
-							| 	Wall
-							| 		start: 324, -166, 0
-							| 		end: 324, -496, 0
-							| 		height: 270
-							| 		width: 10
-							| 		right.color: #B1E74C
-							| 
-							| # TOILET
-							| 	## right.color: #CCCCCC
-							| 	## height: 270
-							| 	## width: 10
-							| 	Wall
-							| 		width: 20
-							| 		start: 525, 196, 0
-							| 		end: 525, -86, 0
-							| 	Wall
-							| 		start: 450, -76, 0
-							| 		end: 400, -76, 0
-							| 	Wall
-							| 		start: 505, 76, 0
-							| 		end: 405, 76, 0
-							| 	Wall
-							| 		start: 415, 66, 0
-							| 		end: 415, -76, 0
-							| 
-							| # KITCHEN
-							| 	## width: 10
-							| 	## height: 270
-							| 	Wall
-							| 		start: 525, -164
-							| 		end: 525, -224
-							| 	Wall
-							| 		start: 525, -436
-							| 		end: 525, -496
-							| 
-							| # Corridor
-							| 	## start.z: 0
-							| 	## end.z: 0
-							| 	## width: 10
-							| 	## height: 270
-							| 	Wall
-							| 		start: 800, -295
-							| 		end: 800, -496
-							| 	Wall
-							| 		start: 800, -295
-							| 		end: 852.5 , -295
-							| 	Wall
-							| 		start: 927.5 , -295
-							| 		end: 990, -295
+		ul.nav.nav-tabs
+			li
+				a(href="#2d", data-toggle="tab") Plan
+			li
+				a(href="#3d", data-toggle="tab") 3D
+			li
+				a(href="#text", data-toggle="tab") Edit
+
+		div.tab-content
+			div.tab-pane.fade#2d
+				span#floorplan
+			div.tab-pane.fade#text
+				textarea#text(rows=100, cols=200)
+					| # OUTER WALLS
+					| 	## height: 270
+					| 	## width: 44
+					| 	## right.color: #B1E74C
+					| 	## top.color: #C79478
+					| 	## bottom.color: #C79478
+					| 	## left.color: #C79478
+					| 	## start.z: 0
+					| 	## end.z: 0
+					| 	Wall
+					| 		start: 0, -540
+					| 		end: 0, 240
+					| 	Wall
+					| 		start: 44, 240
+					| 		end: 990, 240
+					| 	Wall
+					| 		start: 990, -540
+					| 		end: 990, 240
+					| 	Wall
+					| 		start: 44, -496
+					| 		end: 990, -496
+					| 
+					| # BATHROOM WALLS
+					| 	## height: 270
+					| 	## width: 10
+					| 	## right.color: #B1E74C
+					| 	## start.z: 0
+					| 	## end.z: 0
+					| 	Wall
+					| 		start: 324, 196
+					| 		end: 324, -91
+					| 	Wall
+					| 		start: 44, -73
+					| 		end: 144, -73
+					| 	Wall
+					| 		start: 208, -73
+					| 		end: 314, -73
+					| # BATHROOM SLAB
+					|	## height: 10
+					|	## color: #B1E74C 
+					|	## top.color: #B1E74C
+					|	## - pattern.color: 1, #645143
+					|	Slab
+					|		- point: 44, -73, -175
+					|		- point: 44, 196, -175
+					|		- point: 314, 196, -175
+					|		- point: 314, -73, -175
+					|		- pattern: 1, 0, 20 
+					|		- pattern: 1, 0, 100
+					|		- pattern: 1, 100, 100 
+					|		- pattern: 1, 100, 60 
+					|
+					| # BEDROOM
+					| 	## right.color: #CCCCCC
+					| 	Wall
+					| 		start: 324, -166, 0
+					| 		end: 324, -496, 0
+					| 		height: 270
+					| 		width: 10
+					| 		right.color: #B1E74C
+					| 
+					| # TOILET
+					| 	## right.color: #CCCCCC
+					| 	## height: 270
+					| 	## width: 10
+					| 	Wall
+					| 		width: 20
+					| 		start: 525, 196, 0
+					| 		end: 525, -86, 0
+					| 	Wall
+					| 		start: 450, -76, 0
+					| 		end: 400, -76, 0
+					| 	Wall
+					| 		start: 505, 76, 0
+					| 		end: 405, 76, 0
+					| 	Wall
+					| 		start: 415, 66, 0
+					| 		end: 415, -76, 0
+					| 
+					| # KITCHEN
+					| 	## width: 10
+					| 	## height: 270
+					| 	Wall
+					| 		start: 525, -164
+					| 		end: 525, -224
+					| 	Wall
+					| 		start: 525, -436
+					| 		end: 525, -496
+					| 
+					| # Corridor
+					| 	## start.z: 0
+					| 	## end.z: 0
+					| 	## width: 10
+					| 	## height: 270
+					| 	Wall
+					| 		start: 800, -295
+					| 		end: 800, -496
+					| 	Wall
+					| 		start: 800, -295
+					| 		end: 852.5 , -295
+					| 	Wall
+					| 		start: 927.5 , -295
+					| 		end: 990, -295		table
+			div.tabe-pane.fade.in.active#profile#3d
+				div#container
