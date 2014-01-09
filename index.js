@@ -1,5 +1,5 @@
 (function() {
-  var BuildingObject, Parser, Plan, Point, Slab, Wall,
+  var BuildingObject, Parser, Plan, Point, Slab, Utils, Wall,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -14,7 +14,7 @@
     geometry = void 0;
 
     BuildingObject.prototype.generateTexture = function(color, pattern, patternColor) {
-      var canvas, context, point, _i, _len, _ref;
+      var canvas, context, point, _i, _j, _len, _len1, _ref, _ref1;
       if (color == null) {
         color = "#cccccc";
       }
@@ -28,15 +28,29 @@
       canvas.width = this.getLength();
       canvas.height = this.getHeight();
       context = canvas.getContext("2d");
-      context.fillStyle = color;
+      context.fillStyle = Utils.hexToRgba(color);
       context.fillRect(0, 0, this.getLength(), this.getHeight());
+      context.fill();
       if (pattern != null) {
-        context.fillStyle = patternColor;
+        context.save();
+        context.globalCompositeOperation = 'destination-out';
         context.beginPath();
         context.moveTo(pattern[0].x, pattern[0].y);
         _ref = pattern.slice(1);
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           point = _ref[_i];
+          context.lineTo(point.x, point.y);
+        }
+        context.closePath();
+        context.fill();
+        context.restore();
+        context.globalCompositeOperation = 'source-over';
+        context.fillStyle = Utils.hexToRgba(patternColor);
+        context.beginPath();
+        context.moveTo(pattern[0].x, pattern[0].y);
+        _ref1 = pattern.slice(1);
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          point = _ref1[_j];
           context.lineTo(point.x, point.y);
         }
         context.closePath();
@@ -48,9 +62,10 @@
     BuildingObject.prototype.getMaterial = function(texture) {
       var material;
       if (BuildingObject.sampleMaterial == null) {
-        BuildingObject.sampleMaterial = new THREE.MeshBasicMaterial();
+        BuildingObject.sampleMaterial = new THREE.MeshLambertMaterial();
       }
       material = BuildingObject.sampleMaterial.clone();
+      material.transparent = true;
       material.map = texture;
       material.wrapAroud = true;
       return material;
@@ -533,6 +548,26 @@
     return Slab;
 
   })(BuildingObject);
+
+  Utils = (function() {
+    function Utils() {}
+
+    Utils.hexToRgba = function(hex) {
+      var a, b, g, r;
+      r = parseInt(hex.substring(1, 3), 16);
+      g = parseInt(hex.substring(3, 5), 16);
+      b = parseInt(hex.substring(5, 7), 16);
+      if (hex.length > 7) {
+        a = parseFloat(hex.substring(7, 9), 16) / 255;
+      } else {
+        a = 1;
+      }
+      return "rgba( " + r + ", " + g + ", " + b + ", " + a;
+    };
+
+    return Utils;
+
+  })();
 
   Wall = (function(_super) {
     __extends(Wall, _super);
