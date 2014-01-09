@@ -274,9 +274,9 @@
   Plan = (function() {
     var ASPECT, FAR, HEIGHT, NEAR, VIEW_ANGLE, WIDTH;
 
-    WIDTH = 600;
+    WIDTH = 1500;
 
-    HEIGHT = 300;
+    HEIGHT = 800;
 
     VIEW_ANGLE = 75;
 
@@ -336,6 +336,7 @@
       });
       this.layer = new Kinetic.Layer;
       this.stage.add(this.layer);
+      this.switchViewMode();
       this.draw();
     }
 
@@ -422,35 +423,33 @@
       return this.stage.setOffsetY(yMax);
     };
 
+    Plan.prototype.switchViewMode = function() {
+      if (this.controlsEnabled) {
+        this.controlsEnabled = false;
+        this.savedCameraPosition = this.camera.position;
+        this.camera.position = new THREE.Vector3(400, -600, 700);
+        return this.camera.lookAt(new THREE.Vector3(400, 0, 0));
+      } else {
+        this.controlsEnabled = true;
+        if (this.savedCameraPosition != null) {
+          return this.camera.position = this.savedCameraPosition;
+        } else {
+          return this.camera.position = new THREE.Vector3(0, 0, 0);
+        }
+      }
+    };
+
     return Plan;
 
   })();
 
   $(function() {
-    var $container, ASPECT, FAR, HEIGHT, NEAR, VIEW_ANGLE, WIDTH, plan;
-    WIDTH = 400;
-    HEIGHT = 300;
-    VIEW_ANGLE = 45;
-    ASPECT = WIDTH / HEIGHT;
-    NEAR = 0.1;
-    FAR = 10000;
+    var $container, plan;
     plan = new Plan();
     $('body').keypress(function(event) {
       switch (event.charCode) {
         case 99:
-          if (plan.controlsEnabled) {
-            plan.controlsEnabled = false;
-            plan.savedCameraPosition = plan.camera.position;
-            plan.camera.position = new THREE.Vector3(400, -600, 700);
-            return plan.camera.lookAt(new THREE.Vector3(400, 0, 0));
-          } else {
-            plan.controlsEnabled = true;
-            if (plan.savedCameraPosition != null) {
-              return plan.camera.position = plan.savedCameraPosition;
-            } else {
-              return plan.camera.position = new THREE.Vector3(0, 0, 0);
-            }
-          }
+          return plan.switchViewMode();
       }
     });
     $('#text').change(function(event) {

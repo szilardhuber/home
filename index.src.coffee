@@ -208,8 +208,8 @@ class Parser
 
 class Plan
 	# set the scene size
-	WIDTH = 600
-	HEIGHT = 300
+	WIDTH = 1500
+	HEIGHT = 800
 
 	# set some camera attributes
 	VIEW_ANGLE = 75
@@ -286,8 +286,11 @@ class Plan
 		@layer = new Kinetic.Layer
 		@stage.add @layer
 
+		@switchViewMode()
+
 		# start rendering
 		@draw()
+
 
 
 	reset: () ->
@@ -339,34 +342,26 @@ class Plan
 		@stage.setScaleX(Math.min(scaleX, scaleY))
 		@stage.setOffsetY(yMax)
 
+	switchViewMode: () ->
+		if @controlsEnabled
+			@controlsEnabled = false
+			@savedCameraPosition = @camera.position
+			@camera.position = new THREE.Vector3(400, -600, 700)
+			@camera.lookAt new THREE.Vector3(400, 0, 0)
+		else
+			@controlsEnabled = true
+			if @savedCameraPosition?
+				@camera.position = @savedCameraPosition
+			else
+				@camera.position = new THREE.Vector3(0, 0, 0)
+
 $ ->
-	# set the scene size
-	WIDTH = 400
-	HEIGHT = 300
-
-	# set some camera attributes
-	VIEW_ANGLE = 45
-	ASPECT = WIDTH / HEIGHT
-	NEAR = 0.1
-	FAR = 10000
-
 	plan = new Plan()
 
 	$('body').keypress (event) ->
 		switch event.charCode
 			when 99 # c - switch FPS mode
-				if plan.controlsEnabled
-					plan.controlsEnabled = false
-					plan.savedCameraPosition = plan.camera.position
-					plan.camera.position = new THREE.Vector3(400, -600, 700)
-					plan.camera.lookAt new THREE.Vector3(400, 0, 0)
-				else
-					plan.controlsEnabled = true
-					if plan.savedCameraPosition?
-						plan.camera.position = plan.savedCameraPosition
-					else
-						plan.camera.position = new THREE.Vector3(0, 0, 0)
-
+				plan.switchViewMode()
 
 	$('#text').change (event) ->
 		plan.reset()
@@ -382,12 +377,9 @@ $ ->
 		plan.fitToScreen()
 
 
-
-
 	# get the DOM element to attach to
 	# - assume we've got jQuery to hand
 	$container = $("#container")
-
 
 	# attach the render-supplied DOM element
 	$container.append plan.renderer.domElement

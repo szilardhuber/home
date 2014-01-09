@@ -1,23 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Home</title><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><script src="libs/jquery.min.js"></script><script src="libs/three.min.js"></script><script src="libs/kinetic-v4.7.3.min.js"></script><script src="FirstPersonControls.js"></script><script src="FlyControls.js"></script><script src="ConvexGeometry.js"></script><script src="index.js"></script><script id="vertex_shader" type="x-shader/x-vertex">varying vec2 vUv;
-varying vec3 vNormal;
-varying vec3 vViewPosition;
-void main() {
- vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
- vUv = uv;
- vNormal = normalize( normalMatrix * normal );
- vViewPosition = -mvPosition.xyz;
- gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-}</script><script id="fragment_shader" type="x-shader/x-fragment">uniform sampler2D texture;
-uniform sampler2D texture2;
-varying vec2 vUv;
-varying vec3 vNormal;
-varying vec3 vViewPosition;
-void main() {
- vec4 tColor = texture2D( texture, vUv );
- gl_FragColor = tColor;
-}
-
-</script></head><body><table><tr><td>2d</td><td>3d</td><td>Plan</td><td>test</td></tr><tr><td style="border:5px solid red;"><span id="floorplan"></span></td><td><div id="container"></div></td><td><span><textarea id="text" rows="22" cols="50"># OUTER WALLS
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Home</title><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><script src="libs/jquery.min.js"></script><script src="libs/three.min.js"></script><script src="libs/kinetic-v4.7.3.min.js"></script><script src="libs/bootstrap.min.js"></script><script src="libs/tab.js"></script><script src="FirstPersonControls.js"></script><script src="FlyControls.js"></script><script src="ConvexGeometry.js"></script><script src="index.js"></script><link rel="stylesheet" type="text/css" href="libs/bootstrap.min.css"><link rel="stylesheet" type="text/css" href="libs/bootstrap-theme.min.css"></head><body><ul class="nav nav-tabs"><li><a href="#2d" data-toggle="tab">Plan</a></li><li><a href="#3d" data-toggle="tab">3D</a></li><li><a href="#text" data-toggle="tab">Edit</a></li></ul><div class="tab-content"><div id="2d" class="tab-pane fade"><span id="floorplan"></span></div><div id="text" class="tab-pane fade"><textarea id="text" rows="100" cols="200"># OUTER WALLS
 	## height: 270
 	## width: 44
 	## right.color: #B1E74C
@@ -119,4 +100,4 @@ void main() {
 		end: 852.5 , -295
 	Wall
 		start: 927.5 , -295
-		end: 990, -295</textarea></span></td></tr></table></body></html>
+		end: 990, -295		table</textarea></div><div id="3d" class="tabe-pane fade in active"><div id="container"></div></div></div></body></html>
