@@ -8,6 +8,7 @@ THREE.FirstPersonControls = function ( object, domElement ) {
 
 	this.object = object;
 	this.target = new THREE.Vector3( 0, 0, 0 );
+	this.object.up.set(0,0,1);
 
 	this.domElement = ( domElement !== undefined ) ? domElement : document;
 
@@ -219,14 +220,14 @@ THREE.FirstPersonControls = function ( object, domElement ) {
 
 		var actualMoveSpeed = delta * this.movementSpeed;
 
-		if ( this.moveForward || ( this.autoForward && !this.moveBackward ) ) this.object.translateY( - ( actualMoveSpeed + this.autoSpeedFactor ) );
-		if ( this.moveBackward ) this.object.translateY( actualMoveSpeed );
+		if ( this.moveForward || ( this.autoForward && !this.moveBackward ) ) this.object.translateZ( - ( actualMoveSpeed + this.autoSpeedFactor ) );
+		if ( this.moveBackward ) this.object.translateZ( actualMoveSpeed );
 
 		if ( this.moveLeft ) this.object.translateX( - actualMoveSpeed );
 		if ( this.moveRight ) this.object.translateX( actualMoveSpeed );
 
-		if ( this.moveUp ) this.object.translateZ( actualMoveSpeed );
-		if ( this.moveDown ) this.object.translateZ( - actualMoveSpeed );
+		if ( this.moveUp ) this.object.translateY( actualMoveSpeed );
+		if ( this.moveDown ) this.object.translateY( - actualMoveSpeed );
 
 		var actualLookSpeed = delta * this.lookSpeed;
 
@@ -263,10 +264,7 @@ THREE.FirstPersonControls = function ( object, domElement ) {
 
 		targetPosition.x = position.x + 100 * Math.sin( this.phi ) * Math.cos( this.theta );
 		targetPosition.z = position.z + 100 * Math.cos( this.phi );
-		targetPosition.y = position.y + 100 * Math.sin( this.phi ) * Math.sin( this.theta );
-
-		//console.log('Position: ' + position.x + ', ' + position.y + ', ' + position.z);
-		//console.log(targetPosition);
+		targetPosition.y = position.y - 100 * Math.sin( this.phi ) * Math.sin( this.theta );
 
 		this.object.lookAt( targetPosition );
 

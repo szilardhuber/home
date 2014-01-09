@@ -37,7 +37,7 @@ class BuildingObject
 	# Used for having different materials for different faces of the mesh and later we only have to change the texture object in the material.
 	getMaterial: (texture) ->
 		if not BuildingObject.sampleMaterial?
-			BuildingObject.sampleMaterial = new THREE.MeshLambertMaterial()
+			BuildingObject.sampleMaterial = new THREE.MeshBasicMaterial()
 		material = BuildingObject.sampleMaterial.clone()
 		material.map = texture
 		material.wrapAroud = true
@@ -233,7 +233,7 @@ class Plan
 		# the camera starts at 0,0,0
 		# so pull it back
 		@camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR)
-		@camera.position = new THREE.Vector3(100, -200, 100)
+		@camera.position = new THREE.Vector3(100, -200, 160)
 
 		# initialize controls
 		@controls = new THREE.FirstPersonControls( @camera, @renderer.domElement )

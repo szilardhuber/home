@@ -48,7 +48,7 @@
     BuildingObject.prototype.getMaterial = function(texture) {
       var material;
       if (BuildingObject.sampleMaterial == null) {
-        BuildingObject.sampleMaterial = new THREE.MeshLambertMaterial();
+        BuildingObject.sampleMaterial = new THREE.MeshBasicMaterial();
       }
       material = BuildingObject.sampleMaterial.clone();
       material.map = texture;
@@ -297,7 +297,7 @@
       this.renderer.shadowMapType = THREE.PCFShadowMap;
       this.optimize = false;
       this.camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
-      this.camera.position = new THREE.Vector3(100, -200, 100);
+      this.camera.position = new THREE.Vector3(100, -200, 160);
       this.controls = new THREE.FirstPersonControls(this.camera, this.renderer.domElement);
       this.controls.movementSpeed = 300;
       this.controls.lookSpeed = 0.25;
