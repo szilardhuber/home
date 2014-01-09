@@ -17,12 +17,24 @@ class BuildingObject
 
 		# draw the background with the given color. 
 		# we draw it full sized on the canvas
-		context.fillStyle = color
+		context.fillStyle = Utils.hexToRgba(color)
 		context.fillRect 0, 0, @getLength(), @getHeight()
+		context.fill()
 
 		# draw foreground rect - TODO I need more than one patterns
 		if pattern?
-			context.fillStyle = patternColor
+			context.save()
+			context.globalCompositeOperation = 'destination-out'
+			context.beginPath()
+			context.moveTo pattern[0].x, pattern[0].y
+			for point in pattern[1..]
+				context.lineTo point.x , point.y
+			context.closePath()	
+			context.fill()
+			context.restore()
+			
+			context.globalCompositeOperation = 'source-over'
+			context.fillStyle = Utils.hexToRgba(patternColor)
 			context.beginPath()
 			context.moveTo pattern[0].x, pattern[0].y
 			for point in pattern[1..]
@@ -39,6 +51,7 @@ class BuildingObject
 		if not BuildingObject.sampleMaterial?
 			BuildingObject.sampleMaterial = new THREE.MeshLambertMaterial()
 		material = BuildingObject.sampleMaterial.clone()
+		material.transparent = true
 		material.map = texture
 		material.wrapAroud = true
 		material
