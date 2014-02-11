@@ -1,0 +1,102 @@
+# INNER WALLS
+## height: 255
+## width: 10
+## start.z: 0
+## end.z: 0
+    Wall
+        left.color: #a34963
+        start: 10, 274
+        end: 134, 274
+
+    Wall
+        left.color: #a34963
+        start: 134, 274
+        end: 134, 0
+    - pattern: 1, 0, 75
+    - pattern: 1, 0, 195
+    - pattern: 1, 274, 195
+    - pattern: 1, 274, 75
+    - patternDetails: 1, right, #FCF6EE
+    Wall
+        right.color: #a34963
+        start: 10, 364
+        end: 424, 364
+    - pattern: 1, 0, 75
+    - pattern: 1, 0, 195
+    - pattern: 1, 414, 195
+    - pattern: 1, 414, 75
+    - patternDetails: 1, right, #FCF6EE
+    - pattern: 2, 200, 75
+    - pattern: 2, 200, 195
+    - pattern: 2, 320, 195
+    - pattern: 2, 320, 75
+    - patternDetails: 2, right, #CCCCCC
+
+# BATH
+## height: 75
+## width: 10
+## start.z: 0
+## end.z: 0
+## top.color: #f08417
+## bottom.color: #f08417
+## left.color: #f08417
+## right.color: #f08417
+## front.color: #f08417
+## back.color: #f08417
+    Wall
+        start: 184, 254
+        end: 184, 134
+        height: 75
+        width: 50
+    Wall
+        start: 370, 204
+       end: 370, 354
+        height: 120
+
+# TUB
+## height: 70
+## width: 75
+## right.color: #a34963
+## front.color: #a34963 
+    Wall
+        start: 304, 119
+        end: 134, 119
+
+
+# OUTER WALLS
+## height: 255
+## width: 44
+## start.z: 0
+## end.z: 0
+    Wall
+        right.color: #a34963
+        start: 424, 364
+        end: 424, 0
+    - pattern: 1, 0, 75
+    - pattern: 1, 0, 195
+    - pattern: 1, 364, 195
+    - pattern: 1, 364, 75
+    - patternDetails: 1, right, #FCF6EE
+    - pattern: 2, 90, 255
+    - pattern: 2, 324, 255
+    - pattern: 2, 324, 150
+    - patternDetails: 2, right, #CCCCCC
+    Wall
+        left.color: #a34963
+        start: 134, 44
+        end: 424, 44
+    - pattern: 1, 0, 150
+    - pattern: 1, 0, 255
+    - pattern: 1, 120, 255
+    - pattern: 1, 120, 150
+    - patternDetails: 1, right, #CCCCCC
+        - window: 170, 90, 290, 210
+
+# SLAB
+## height: 10
+## top.color: #FCF6EE
+    Slab
+        - point: 10, 364, -175
+        - point: 424, 364, -175
+        - point: 424, 0, -175
+        - point: 10, 0, -175

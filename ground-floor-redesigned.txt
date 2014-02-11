@@ -1,0 +1,74 @@
+# OUTER WALLS
+## height: 270
+## width: 44
+## right.color: #B1E74C
+## top.color: #C79478
+## bottom.color: #C79478
+## left.color: #C79478
+## start.z: 0
+## end.z: 0
+	Wall
+		start: 0, 0
+		end: 0, 814
+		- pattern: 1, 667, 0
+		- pattern: 1, 667, 270
+		- pattern: 1, 814, 270
+		- pattern: 1, 814, 0
+		- patternDetails: 1, right, #645143
+	Wall
+		start: 0, 814
+		end: 1071, 814
+		- window: 44, 128, 132, 238
+		- window: 189, 128, 278, 238
+		- pattern: 1, 44, 0
+		- pattern: 1, 44, 270
+		- pattern: 1, 147, 270
+		- pattern: 1, 147, 0
+		- patternDetails: 1, right, #645143
+	Wall
+		start: 1071, 814
+		end: 1071, 0
+	Wall
+		start: 1071, 44
+		end: 0, 44
+
+# BATHROOM SLAB
+## height: 10
+## color: #B1E74C 
+## top.color: #B1E74C
+	Slab
+		- point: 44, 491, -175
+		- point: 44, 814, -175
+		- point: 332, 814, -175
+		- point: 332, 491, -175
+		- pattern: 1, 0, 55
+		- pattern: 1, 0, 0
+		- pattern: 1, 100, 0 
+		- pattern: 1, 100, 34
+		- patternDetails: 1, top, #645143
+
+
+# BATHROOM WALLS
+## height: 270
+## width: 10
+## right.color: #B1E74C
+## left.color: #B1E74C
+## start.z: 0
+## end.z: 0
+	Wall
+		start: 322, 491
+		end: 322, 770
+		- pattern: 1, 166, 0
+		- pattern: 1, 166, 270
+		- pattern: 1, 269, 270
+		- pattern: 1, 269, 0
+		- patternDetails: 1, right, #645143
+	Wall
+		start: 44, 501
+		end: 322, 501
+		- window: 103, 0, 178, 210
+		- pattern: 1, 0, 0
+		- pattern: 1, 0, 270
+		- pattern: 1, 103, 270
+		- pattern: 1, 103, 0
+		- patternDetails: 1, right, #645143

@@ -1,0 +1,123 @@
+# OUTER WALLS
+## height: 270
+## width: 44
+## right.color: #B1E74C
+## top.color: #C79478
+## bottom.color: #C79478
+## left.color: #C79478
+## start.z: 0
+## end.z: 0
+	Wall
+		start: 0, -540
+		end: 0, 240
+		- pattern: 1, 642, 0
+		- pattern: 1, 642, 270
+		- pattern: 1, 736, 270
+		- pattern: 1, 736, 0
+		- patternDetails: 1, right, #645143
+	Wall
+		start: 44, 240
+		end: 990, 240
+		- window: 0, 150, 90, 240
+		- window: 145, 150, 235, 240
+		- pattern: 1, 0, 0
+		- pattern: 1, 0, 270
+		- pattern: 1, 94, 270
+		- pattern: 1, 94, 0
+		- patternDetails: 1, right, #645143
+	Wall
+		start: 990, -540
+		end: 990, 240
+	Wall
+		start: 44, -496
+		end: 990, -496
+
+# BATHROOM WALLS
+## height: 270
+## width: 10
+## right.color: #B1E74C
+## start.z: 0
+## end.z: 0
+	Wall
+		start: 324, 196
+		end: 324, -91
+		- pattern: 1, 183, 0
+		- pattern: 1, 183, 270
+		- pattern: 1, 274, 270
+		- pattern: 1, 274, 0
+		- patternDetails: 1, right, #645143
+	Wall
+		start: 44, -73
+		end: 144, -73
+	    left.color: #B1E74C
+	Wall
+		start: 208, -73
+		end: 314, -73
+	    left.color: #645143
+
+# BATHROOM SLAB
+## height: 10
+## color: #B1E74C 
+## top.color: #B1E74C
+	Slab
+		- point: 44, -73, -175
+		- point: 44, 196, -175
+		- point: 314, 196, -175
+		- point: 314, -73, -175
+		- pattern: 1, 0, 65 
+		- pattern: 1, 0, 0
+		- pattern: 1, 100, 0 
+		- pattern: 1, 100, 32
+		- patternDetails: 1, top, #645143
+
+# BEDROOM
+## right.color: #CCCCCC
+	Wall
+		start: 324, -166, 0
+		end: 324, -496, 0
+		height: 270
+		width: 10
+		right.color: #B1E74C
+
+# TOILET
+## right.color: #CCCCCC
+## height: 270
+## width: 10
+	Wall
+		width: 20
+		start: 525, 196, 0
+		end: 525, -86, 0
+	Wall
+		start: 450, -76, 0
+		end: 400, -76, 0
+	Wall
+		start: 505, 76, 0
+		end: 405, 76, 0
+	Wall
+		start: 415, 66, 0
+		end: 415, -76, 0
+
+# KITCHEN
+## width: 10
+## height: 270
+	Wall
+		start: 525, -164
+		end: 525, -224
+	Wall
+		start: 525, -436
+		end: 525, -496
+
+# Corridor
+## start.z: 0
+## end.z: 0
+## width: 10
+## height: 270
+	Wall
+		start: 800, -295
+		end: 800, -496
+	Wall
+		start: 800, -295
+		end: 852.5 , -295
+	Wall
+		start: 927.5 , -295
+		end: 990, -295
