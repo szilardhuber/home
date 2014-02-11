@@ -21,6 +21,8 @@ class Plan
 
 		# merge the meshes into one geometry
 		@optimize = false
+		@saveImage = false
+		@needsUpdate = true
 
 		# the camera starts at 0,0,0
 		# so pull it back
@@ -46,8 +48,8 @@ class Plan
 		hemiLight.position.set( 0, 0, 500 )
 		@scene.add( hemiLight )
 
-		dirLight = new THREE.DirectionalLight( 0xffffff, 1 )
-		dirLight.position.set( -1, -1, 0.75 )
+		dirLight = new THREE.DirectionalLight( 0xffffff, 0.4 )
+		dirLight.position.set( -0.5, 5, 8 )
 		dirLight.position.multiplyScalar( 50)
 		dirLight.name = "dirlight"
 		# dirLight.shadowCameraVisible = true
@@ -97,7 +99,13 @@ class Plan
 		setTimeout ( () => requestAnimationFrame(@draw) ) , 1000 / 30
 		if @controlsEnabled
 			@controls.update(@clock.getDelta())
-		@renderer.render @scene, @camera
+		if @needsUpdate or @controlsEnabled
+			@renderer.render @scene, @camera
+			@needsUpdate = false
+		if @saveImage
+			imageData = @renderer.domElement.toDataURL("image/png").replace("image/png", "image/octet-stream")
+			window.location.href = imageData
+			@saveImage = false
 		@layer.batchDraw()
 
 	add: (object) ->
@@ -110,8 +118,11 @@ class Plan
 					@materials.push object.mesh.material.materials[i / 2]
 				face.materialIndex = @materials.length - 1
 			THREE.GeometryUtils.merge Wall::geometry, object.mesh
+		if object.line?
+			@layer.add object.line
 		if object.polygon?
 			@layer.add object.polygon
+		@needsUpdate = true
 
 	fitToScreen: () ->
 		xMin = 0
@@ -130,11 +141,14 @@ class Plan
 					yMax = point.y
 		scaleY = Math.abs(HEIGHT / (yMax - yMin))
 		scaleX = Math.abs(WIDTH / (xMax - xMin))
-		@stage.setScaleY(- Math.min(scaleX, scaleY))
-		@stage.setScaleX(Math.min(scaleX, scaleY))
-		@stage.setOffsetY(yMax)
+		scale = Math.min(scaleX, scaleY) * .90
+		@stage.setScaleY(- scale)
+		@stage.setScaleX(scale)
+		@stage.setOffsetY(yMax + 2)
+		@stage.setOffsetX(-20)
 
 	switchViewMode: () ->
+		@needsUpdate = true
 		if @controlsEnabled
 			@controlsEnabled = false
 			@savedCameraPosition = @camera.position
@@ -147,6 +161,8 @@ class Plan
 			else
 				@camera.position = new THREE.Vector3(0, 0, 0)
 
+
+
 $ ->
 	plan = new Plan()
 
@@ -154,6 +170,9 @@ $ ->
 		switch event.charCode
 			when 99 # c - switch FPS mode
 				plan.switchViewMode()
+			when 112 # p - save current canvas as image
+				plan.saveImage = true
+
 
 	$('#text').change (event) ->
 		plan.reset()

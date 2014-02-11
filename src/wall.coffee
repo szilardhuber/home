@@ -26,7 +26,12 @@ class Wall extends BuildingObject
 			points: [@startx, @starty, @endx, @endy, endx2, endy2, startx2, starty2]
 			fill: 'green'
 			stroke: 'black'
+			strokeWidth: 1
+		@line = new Kinetic.Line
+			points: [@startx, @starty, @endx, @endy]
+			stroke: 'red'
 			strokeWidth: 4
+
 
 	createGeometry: (startx, starty, endx, endy, height, width) ->
 		shape = new THREE.Shape()

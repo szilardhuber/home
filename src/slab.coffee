@@ -16,6 +16,7 @@ class Slab extends BuildingObject
 			]
 
 		@mesh = new THREE.Mesh(new @createGeometry(@vertices, @height), new THREE.MeshFaceMaterial(materials))
+		@mesh.translateZ( -@height )
 		@mesh.castShadow = true
 		@mesh.receiveShadow = true
 		###

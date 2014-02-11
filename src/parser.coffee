@@ -50,15 +50,13 @@ class Parser
 						arrayTyped = true
 						name = name.substring(2, name.length)
 					value = tokens[1].trim()
-					if name not of object or not arrayTyped
+					if not arrayTyped
 						object[name] = value
-					else if object[name]?.push?
+					else 
+						if name not of object
+							v = []
+							object[name] = v
 						object[name].push value
-					else
-						v = []
-						v.push object[name]
-						v.push value
-						object[name] = v
 
 		if object?
 			@objects.push object 
@@ -68,6 +66,40 @@ class Parser
 
 	get: () ->
 		object = @objects[@built]
+		patterns = undefined
+		if object['pattern']?
+			patterns = {}
+			for point in object['pattern']
+				values = point.split(',')
+				id = parseInt(values[0].trim())
+				x = parseInt(values[1].trim())
+				y = parseInt(values[2].trim())
+				if not patterns[id]?
+					patterns[id] = {}
+					patterns[id].points = []
+				patterns[id].points.push ('x': x, 'y': y)
+		if object['patternDetails']?
+			for item in object['patternDetails']
+				values = item.split(',')
+				id = parseInt(values[0].trim())
+				color = values[2].trim()
+				patterns[id].color = color
+		if object['window']?
+			for item, i in object['window']
+				values = item.split(',')
+				x1 = parseInt(values[0].trim())
+				y1 = parseInt(values[1].trim())
+				x2 = parseInt(values[2].trim())
+				y2 = parseInt(values[3].trim())
+				if not patterns?
+					patterns = {}
+				patterns["window#{i}"] = {}
+				patterns["window#{i}"].points = []
+				patterns["window#{i}"].points.push(('x': x1, 'y': y1))
+				patterns["window#{i}"].points.push(('x': x1, 'y': y2))
+				patterns["window#{i}"].points.push(('x': x2, 'y': y2))
+				patterns["window#{i}"].points.push(('x': x2, 'y': y1))
+				patterns["window#{i}"].color = "#99999922"
 		switch object['type']
 			when 'wall'
 				@built++
@@ -86,28 +118,19 @@ class Parser
 				if startx? and starty? and endx? and endy? and height? and width?
 					wall = new Wall(startx, starty, endx, endy, height, width)
 					if object['bottom.color']?
-						wall.changeTexture(0, object['bottom.color'])
+						wall.changeTexture(0, object['bottom.color'], patterns)
 					if object['top.color']?
-						wall.changeTexture(1, object['top.color'])
+						wall.changeTexture(1, object['top.color'], patterns)
 					if object['right.color']?
-						if startx == 44 and starty == 240 and endx == 990 and endy == 240
-							pattern = []
-							pattern.push new Point(160, 0)
-							pattern.push new Point(160, 270)
-							pattern.push new Point(260, 270)
-							pattern.push new Point(260, 0)
-							wall.changeTexture(2, object['right.color'], pattern, "#645143")
-						else
-							wall.changeTexture(2, object['right.color'])
+						wall.changeTexture(2, object['right.color'], patterns)
 					if object['rear.color']?
-						wall.changeTexture(3, object['rear.color'])
+						wall.changeTexture(3, object['rear.color'], patterns)
 					if object['left.color']?
-						wall.changeTexture(4, object['left.color'])
+						wall.changeTexture(4, object['left.color'], patterns)
 					if object['front.color']?
-						wall.changeTexture(5, object['front.color'])
+						wall.changeTexture(5, object['front.color'], patterns)
 					wall
 			when 'slab'
-				console.log object['point']
 				@built++
 				vertices = []
 				for vertex in object['point']
@@ -115,21 +138,16 @@ class Parser
 					vertices.push new THREE.Vector3(parseInt(points[0].trim()), parseInt(points[1].trim()), parseInt(points[2].trim()))
 				slab = new Slab(vertices, 40, object['color'])
 				if object['bottom.color']?
-					slab.changeTexture(0, object['bottom.color'])
+					slab.changeTexture(0, object['bottom.color'], patterns)
 				if object['top.color']?
-					pattern = []
-					pattern.push new Point(0, 20)
-					pattern.push new Point(0, 100)
-					pattern.push new Point(100, 100)
-					pattern.push new Point(100, 60)
-					slab.changeTexture(1, object['top.color'], pattern, "#645143")
+					slab.changeTexture(1, object['top.color'], patterns)
 				if object['right.color']?
-					slab.changeTexture(2, object['right.color'])
+					slab.changeTexture(2, object['right.color'], patterns)
 				if object['rear.color']?
-					slab.changeTexture(3, object['rear.color'])
+					slab.changeTexture(3, object['rear.color'], patterns)
 				if object['left.color']?
-					slab.changeTexture(4, object['left.color'])
+					slab.changeTexture(4, object['left.color'], patterns)
 				if object['front.color']?
-					slab.changeTexture(5, object['front.color'])
+					slab.changeTexture(5, object['front.color'], patterns)
 				slab
 

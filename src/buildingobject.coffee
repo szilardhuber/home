@@ -6,7 +6,7 @@ class BuildingObject
    	# Currently we only support adding a background color and a rect with a color above it.
    	# This is enough for the current needs but as this method uses a canvas later it could
    	# be extended to arbitrary complexity.
-	generateTexture: (color = "#cccccc", pattern = undefined, patternColor = undefined) ->
+	generateTexture: (color = "#cccccc", patterns = undefined) ->
 		# create the canvas that we will draw to and set the size to the size of the wall
 		canvas = document.createElement("canvas")
 		canvas.width = @getLength()
@@ -21,26 +21,29 @@ class BuildingObject
 		context.fillRect 0, 0, @getLength(), @getHeight()
 		context.fill()
 
-		# draw foreground rect - TODO I need more than one patterns
-		if pattern?
-			context.save()
-			context.globalCompositeOperation = 'destination-out'
-			context.beginPath()
-			context.moveTo pattern[0].x, pattern[0].y
-			for point in pattern[1..]
-				context.lineTo point.x , point.y
-			context.closePath()	
-			context.fill()
-			context.restore()
-			
-			context.globalCompositeOperation = 'source-over'
-			context.fillStyle = Utils.hexToRgba(patternColor)
-			context.beginPath()
-			context.moveTo pattern[0].x, pattern[0].y
-			for point in pattern[1..]
-				context.lineTo point.x , point.y
-			context.closePath()
-			context.fill()
+		# draw foreground rect
+		if patterns?
+			for id, pattern of patterns
+				context.save()
+				context.globalCompositeOperation = 'destination-out'
+				context.beginPath()
+				context.moveTo pattern.points[0].x, canvas.height - pattern.points[0].y
+				for point in pattern.points[1..]
+					context.lineTo point.x , canvas.height - point.y
+				context.closePath()	
+				context.fill()
+				context.restore()
+	
+				context.save()			
+				context.globalCompositeOperation = 'source-over'
+				context.fillStyle = Utils.hexToRgba(pattern.color)
+				context.beginPath()
+				context.moveTo pattern.points[0].x, canvas.height - pattern.points[0].y
+				for point in pattern.points[1..]
+					context.lineTo point.x , canvas.height - point.y
+				context.closePath()
+				context.fill()
+				context.restore()
 
 		# return the canvas
 		canvas
@@ -64,15 +67,15 @@ class BuildingObject
 	#		3 - rear
 	#		4 - left
 	#		5 - front
-	changeTexture: (side, color, pattern = undefined, patternColor = undefined) ->
-		texture = new THREE.Texture @generateTexture(color, pattern, patternColor)
+	changeTexture: (side, color, patterns = undefined) ->
+		texture = new THREE.Texture @generateTexture(color, patterns)
 		texture.needsUpdate = true
-		texture.name = "#{side}-#{color}-#{pattern}"
+		texture.name = "#{side}-#{color}"
 		@mesh.material.materials[side].map = texture
 		@mesh.material.materials[side].needsUpdate = true
 		@mesh.geometry.faces[side * 2].materialIndex = side
 		@mesh.geometry.faces[(side * 2) + 1].materialIndex = side
-		if pattern?
+		if patterns?
 			@updateUVs(side)
 
 	updateUVs: (side) ->
